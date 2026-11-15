@@ -1,0 +1,513 @@
+{
+  "source": "Недельный планер.xlsx",
+  "importedAt": "2026-11-15",
+  "dailyHabits": [
+    {
+      "id": "habit-18",
+      "name": "📖 Чтение книг",
+      "done": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-19",
+      "name": "💧 Норма воды",
+      "done": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-20",
+      "name": "🚶 Шаги 8 000",
+      "done": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-21",
+      "name": "💰 Учёт бюджета",
+      "done": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-23",
+      "name": "🧴 Уход за кожей",
+      "done": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-24",
+      "name": "🏃 Зарядка",
+      "done": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    },
+    {
+      "id": "habit-25",
+      "name": "💊 Таблетки",
+      "done": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false
+      ],
+      "frequency": "daily"
+    }
+  ],
+  "weeklyHabits": [
+    {
+      "id": "weekly-29",
+      "name": "🛏 Смена постели",
+      "done": true,
+      "frequency": "weekly"
+    },
+    {
+      "id": "weekly-30",
+      "name": "🧹 Генеральная уборка",
+      "done": false,
+      "frequency": "weekly"
+    },
+    {
+      "id": "weekly-31",
+      "name": "🛒 Закуп продуктов",
+      "done": true,
+      "frequency": "weekly"
+    },
+    {
+      "id": "weekly-32",
+      "name": "📔 Дневник",
+      "done": false,
+      "frequency": "weekly"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "excel-task-0-11",
+      "title": "Внести все операции за день",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-13",
+      "title": "Зарядка",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-14",
+      "title": "Лечь до 23:00",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-15",
+      "title": "Читать",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-16",
+      "title": "Новелла",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-0-19",
+      "title": "Таблетки",
+      "day": 0,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-11",
+      "title": "Внести все операции за день",
+      "day": 1,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 1,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-13",
+      "title": "Зарядка",
+      "day": 1,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-14",
+      "title": "Лечь до 23:00",
+      "day": 1,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-15",
+      "title": "Читать",
+      "day": 1,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-16",
+      "title": "Новелла",
+      "day": 1,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-1-19",
+      "title": "Таблетки",
+      "day": 1,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-11",
+      "title": "Внести все операции за день",
+      "day": 2,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 2,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-13",
+      "title": "Зарядка",
+      "day": 2,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-14",
+      "title": "Лечь до 23:00",
+      "day": 2,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-15",
+      "title": "Читать",
+      "day": 2,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-16",
+      "title": "Новелла",
+      "day": 2,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-2-19",
+      "title": "Таблетки",
+      "day": 2,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-11",
+      "title": "Внести все операции за день",
+      "day": 3,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 3,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-13",
+      "title": "Зарядка",
+      "day": 3,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-14",
+      "title": "Лечь до 23:00",
+      "day": 3,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-15",
+      "title": "Читать",
+      "day": 3,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-16",
+      "title": "Новелла",
+      "day": 3,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-3-19",
+      "title": "Таблетки",
+      "day": 3,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-11",
+      "title": "Внести все операции за день",
+      "day": 4,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 4,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-13",
+      "title": "Зарядка",
+      "day": 4,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-14",
+      "title": "Лечь до 23:00",
+      "day": 4,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-15",
+      "title": "Читать",
+      "day": 4,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-16",
+      "title": "Новелла",
+      "day": 4,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-4-19",
+      "title": "Таблетки",
+      "day": 4,
+      "done": true,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-11",
+      "title": "Внести все операции за день",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-13",
+      "title": "Зарядка",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-14",
+      "title": "Лечь до 23:00",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-15",
+      "title": "Читать",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-16",
+      "title": "Новелла",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-5-19",
+      "title": "Таблетки",
+      "day": 5,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-11",
+      "title": "Внести все операции за день",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-12",
+      "title": "Озон-рассрочка – нет",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-13",
+      "title": "Зарядка",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-14",
+      "title": "Лечь до 23:00",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-15",
+      "title": "Читать",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-16",
+      "title": "Новелла",
+      "day": 6,
+      "done": false,
+      "archived": false
+    },
+    {
+      "id": "excel-task-6-19",
+      "title": "Таблетки",
+      "day": 6,
+      "done": false,
+      "archived": false
+    }
+  ],
+  "notes": [
+    {
+      "id": "excel-note-4-21",
+      "text": "Хотелс Драгом сходить на свидание, но увы…",
+      "day": 4,
+      "archived": false
+    },
+    {
+      "id": "excel-note-4-23",
+      "text": "Провел прекрасно с Драгом время",
+      "day": 4,
+      "archived": false
+    },
+    {
+      "id": "excel-note-4-25",
+      "text": "Создал этот планер!",
+      "day": 4,
+      "archived": false
+    },
+    {
+      "id": "excel-note-5-21",
+      "text": "Поездка к бабушке, ночовка у мамы",
+      "day": 5,
+      "archived": false
+    }
+  ],
+  "quotes": [
+    "Маленькие шаги каждый день приводят к большим переменам.",
+    "Не обязательно быть идеальной — достаточно продолжать.",
+    "Сегодня — хорошее время начать с малого.",
+    "Забота о себе тоже входит в список важных дел.",
+    "Тихий прогресс — тоже прогресс.",
+    "Пусть твой план помогает жить, а не мешает жить.",
+    "Один выполненный пункт — уже маленькая победа.",
+    "Отдых — часть продуктивности.",
+    "Сравнивай себя только с собой вчерашней.",
+    "Ты можешь начать заново в любой день."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Мой планер",
+  "short_name": "Планер",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff9f7",
+  "theme_color": "#f7e7eb",
+  "lang": "ru",
+  "icons": []
+}
