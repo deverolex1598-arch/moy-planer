@@ -1,53 +1,361 @@
-const DAYS=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],FULL=["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
-const $=s=>document.querySelector(s);let state,tab="home",selectedDay=(new Date().getDay()+6)%7,weekOffset=0,editing=null;
-const today=new Date();const monday=d=>{let x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x};let weekStart=monday(today);
-function dateKey(d){return d.toISOString().slice(0,10)}function dateFor(i){let d=new Date(weekStart);d.setDate(d.getDate()+i+weekOffset*7);return d}
-function load(){let raw=localStorage.getItem("softPlanner");if(raw){state=JSON.parse(raw);return}fetch("seed.json").then(r=>r.json()).then(seed=>{state={...seed,archive:[],theme:"pink",reminder:"",reminderEnabled:false};save();render()})}
-function save(){localStorage.setItem("softPlanner",JSON.stringify(state))}
-function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function quote(){let q=state.quotes[Math.floor(Math.random()*state.quotes.length)];$("#quoteBox").textContent=q}
-function applyTheme(){document.body.className=state.theme==="pink"?"":"theme-"+state.theme}
-function dayTasks(day){return state.tasks.filter(t=>t.day===day&&!t.archived)}
-function pct(){let all=state.dailyHabits.length*7,done=state.dailyHabits.reduce((n,h)=>n+h.done.filter(Boolean).length,0);return all?Math.round(done/all*100):0}
-function render(){if(!state)return;applyTheme();$("#todayLabel").textContent=today.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));let v=$("#view");({home:home,week:week,habits:habits,notes:notes,archive:archive,stats:stats}[tab]||home)(v)}
-function section(title,sub=""){return `<div class="row between"><div><h2>${title}</h2>${sub?`<div class="sub">${sub}</div>`:""}</div></div>`}
-function progress(n){return `<div class="progress"><i style="width:${Math.max(0,Math.min(100,n))}%"></i></div>`}
-function home(v){let h=state.dailyHabits.reduce((n,x)=>n+x.done[selectedDay],0),total=state.dailyHabits.length,ts=dayTasks(selectedDay);v.innerHTML=section("Сегодня","Небольшие шаги — тоже результат")+`<div class="card"><div class="row between"><div><div class="muted">Привычки за день</div><div class="big">${h}/${total}</div></div><div class="big">${total?Math.round(h/total*100):0}%</div></div>${progress(total?h/total*100:0)}</div><div class="card"><div class="row between"><h3>Выбери день</h3><button class="mini" data-go="week">Вся неделя</button></div>${dayPicker()}</div><div class="card"><div class="row between"><h3>Привычки</h3><button class="mini" data-go="habits">Изменить</button></div>${state.dailyHabits.map(x=>habitRow(x,selectedDay)).join("")}</div><div class="card"><div class="row between"><h3>Задачи · ${DAYS[selectedDay]}</h3><button class="mini" data-add="task">＋ Добавить</button></div>${taskList(ts)}</div>`}
-function dayPicker(){return `<div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""} ${dayTasks(i).length?"has":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div>`}
-function habitRow(h,day){return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">⋯</button></div>`}
-function taskList(items){return items.length?items.map(t=>`<div class="item ${t.done?"done":""}"><button class="check ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini" data-edit-task="${t.id}">✎</button><button class="mini" data-archive-task="${t.id}">▣</button></div>`).join(""):`<div class="empty">Пока нет задач. Добавь первую ♡</div>`}
-function week(v){v.innerHTML=section("План недели","Календарь и задачи по дням")+`<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div><div class="card">${dayPicker()}</div>${DAYS.map((d,i)=>`<div class="card"><div class="row between"><div><b>${d}, ${dateFor(i).getDate()} ${dateFor(i).toLocaleDateString("ru-RU",{month:"short"})}</b><div class="muted">${dayTasks(i).filter(x=>x.done).length}/${dayTasks(i).length} задач выполнено</div></div><button class="mini" data-add="task" data-add-day="${i}">＋</button></div>${taskList(dayTasks(i))}</div>`).join("")}`}
-function habits(v){v.innerHTML=section("Мои привычки","Меняй список под себя в любое время")+`<div class="card"><div class="row between"><h3>Ежедневные</h3><button class="primary" data-add="habit">＋ Привычка</button></div>${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><span class="pill">${h.done.filter(Boolean).length}/7</span><button class="mini" data-edit-habit="${h.id}">Изменить</button><button class="mini" data-archive-habit="${h.id}">▣</button></div>`).join("")}</div><div class="card"><div class="row between"><h3>Еженедельные</h3><button class="primary" data-add="weekly">＋ Привычка</button></div>${state.weeklyHabits.map(h=>`<div class="item"><button class="check ${h.done?"on":""}" data-weekly="${h.id}">${h.done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly="${h.id}">Изменить</button><button class="mini" data-archive-weekly="${h.id}">▣</button></div>`).join("")}</div>`}
-function notes(v){v.innerHTML=section("Заметки","Мысли и важные моменты")+`<div class="card"><button class="primary" data-add="note">＋ Новая заметка</button>${state.notes.filter(n=>!n.archived).length?state.notes.filter(n=>!n.archived).map(n=>`<div class="item"><span class="itemtext">${escapeHtml(n.text)}</span><span class="pill">${DAYS[n.day]||"—"}</span><button class="mini" data-edit-note="${n.id}">✎</button><button class="mini" data-archive-note="${n.id}">▣</button></div>`).join(""):`<div class="empty">Здесь будут твои заметки ♡</div>`}</div>`}
-function archive(v){let a=state.archive||[];v.innerHTML=section("Архив","Записи можно восстановить или удалить навсегда")+`<div class="card"><div class="row between"><b>В архиве: ${a.length}</b><span class="pill">Локально</span></div>${a.length?a.map(x=>`<div class="item"><span class="itemtext"><b>${x.type==="task"?"Задача":x.type==="note"?"Заметка":x.type==="habit"?"Привычка":"Запись"}:</b> ${escapeHtml(x.title||x.text||x.name)}</span><button class="mini" data-restore="${x.id}">♻</button><button class="mini danger" data-purge="${x.id}">🗑</button></div>`).join(""):`<div class="empty">Архив пока пуст. Удалённые записи появятся здесь.</div>`}</div>`}
-function stats(v){let done=state.dailyHabits.reduce((n,h)=>n+h.done.filter(Boolean).length,0),total=state.dailyHabits.length*7,completed=state.tasks.filter(t=>t.done&&!t.archived).length;v.innerHTML=section("Твой прогресс","Мягко и без гонки за идеалом")+`<div class="grid2"><div class="stat"><span class="muted">Привычки</span><strong>${total?Math.round(done/total*100):0}%</strong><span class="muted">${done} из ${total}</span></div><div class="stat"><span class="muted">Задачи</span><strong>${completed}</strong><span class="muted">выполнено</span></div><div class="stat"><span class="muted">Активные задачи</span><strong>${state.tasks.filter(t=>!t.done&&!t.archived).length}</strong></div><div class="stat"><span class="muted">Заметки</span><strong>${state.notes.filter(n=>!n.archived).length}</strong></div></div><div class="card"><h3>Ежедневные привычки</h3>${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><b>${h.done.filter(Boolean).length}/7</b></div>`).join("")}</div>`}
-function openEdit(type,obj=null,day=selectedDay){editing={type,id:obj?.id};$("#dialogTitle").textContent=obj?"Изменить запись":"Новая запись";$("#fieldLabel").firstChild.textContent=type==="note"?"Текст заметки":type==="task"?"Название задачи":"Название привычки";$("#editText").value=obj?(obj.title||obj.text||obj.name):"";$("#editDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}" ${i===(obj?.day??day)?"selected":""}>${d}</option>`).join("");$("#dayField").style.display=["task","note"].includes(type)?"block":"none";$("#editDialog").showModal()}
-$("#editForm").addEventListener("submit",e=>{if(e.submitter?.id!=="saveEdit")return;e.preventDefault();let val=$("#editText").value.trim();if(!val)return;let day=+$("#editDay").value,t=editing.type,arr=t==="habit"||t==="weekly"?(t==="habit"?state.dailyHabits:state.weeklyHabits):t==="task"?state.tasks:state.notes;let obj=editing.id?arr.find(x=>x.id===editing.id):null;if(obj){if(t==="task")obj.title=val;else if(t==="note")obj.text=val;else obj.name=val;if(t==="task"||t==="note")obj.day=day}else{let id="u-"+Date.now();if(t==="task")state.tasks.push({id,title:val,day,done:false,archived:false});if(t==="note")state.notes.push({id,text:val,day,archived:false});if(t==="habit")state.dailyHabits.push({id,name:val,done:Array(7).fill(false),frequency:"daily"});if(t==="weekly")state.weeklyHabits.push({id,name:val,done:false,frequency:"weekly"})}save();$("#editDialog").close();render()});
-function archiveItem(type,id,arr){let x=arr.find(o=>o.id===id);if(!x)return;arr.splice(arr.indexOf(x),1);state.archive.push({id:"a-"+Date.now(),type,...x,archivedAt:new Date().toISOString()});save();render()}
-document.addEventListener("click",e=>{let b=e.target.closest("button");if(!b)return;
-if(b.dataset.tab){tab=b.dataset.tab;render()}
-if(b.dataset.day!==undefined){selectedDay=+b.dataset.day;render()}
-if(b.dataset.go){tab=b.dataset.go;render()}
-if(b.dataset.week){weekOffset+=+b.dataset.week;render()}
-if(b.dataset.add){openEdit(b.dataset.add,null,b.dataset.addDay===undefined?selectedDay:+b.dataset.addDay)}
-if(b.dataset.habit){let h=state.dailyHabits.find(x=>x.id===b.dataset.habit);h.done[+b.dataset.day]=!h.done[+b.dataset.day];save();render()}
-if(b.dataset.task){let t=state.tasks.find(x=>x.id===b.dataset.task);t.done=!t.done;if(t.done)t.completedAt=new Date().toISOString();save();render()}
-if(b.dataset.weekly){let h=state.weeklyHabits.find(x=>x.id===b.dataset.weekly);h.done=!h.done;save();render()}
-if(b.dataset.editTask){let t=state.tasks.find(x=>x.id===b.dataset.editTask);openEdit("task",t)}
-if(b.dataset.archiveTask)archiveItem("task",b.dataset.archiveTask,state.tasks);
-if(b.dataset.archiveNote)archiveItem("note",b.dataset.archiveNote,state.notes);
-if(b.dataset.archiveHabit)archiveItem("habit",b.dataset.archiveHabit,state.dailyHabits);
-if(b.dataset.archiveWeekly)archiveItem("weekly",b.dataset.archiveWeekly,state.weeklyHabits);
-if(b.dataset.editNote){let n=state.notes.find(x=>x.id===b.dataset.editNote);openEdit("note",n)}
-if(b.dataset.editHabit){let h=state.dailyHabits.find(x=>x.id===b.dataset.editHabit);openEdit("habit",h)}
-if(b.dataset.editWeekly){let h=state.weeklyHabits.find(x=>x.id===b.dataset.editWeekly);openEdit("weekly",h)}
-if(b.dataset.restore){let x=state.archive.find(x=>x.id===b.dataset.restore);if(x){state.archive.splice(state.archive.indexOf(x),1);delete x.archivedAt;x.archived=false;if(x.type==="task")state.tasks.push(x);else if(x.type==="note")state.notes.push(x);else if(x.type==="habit")state.dailyHabits.push(x);else if(x.type==="weekly")state.weeklyHabits.push(x);else state.tasks.push(x);save();render()}}
-if(b.dataset.purge){if(confirm("Удалить запись окончательно?")){state.archive=state.archive.filter(x=>x.id!==b.dataset.purge);save();render()}}
-if(b.id==="quoteBtn")quote();if(b.id==="settingsBtn")settings();
+
+const DAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+const FULL = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null;
+
+const today = new Date();
+const monday = d => {
+  let x = new Date(d);
+  x.setHours(0,0,0,0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+};
+let weekStart = monday(today);
+
+function dateKey(d) {
+  return d.toISOString().slice(0,10);
+}
+function dateFor(i) {
+  let d = new Date(weekStart);
+  d.setDate(d.getDate() + i + weekOffset * 7);
+  return d;
+}
+
+function load() {
+  let raw = localStorage.getItem("softPlanner");
+  if (raw) {
+    state = JSON.parse(raw);
+    return;
+  }
+  fetch("seed.json")
+    .then(r => r.json())
+    .then(seed => {
+      state = {...seed, archive:[], theme:"pink", reminder:"20:00", reminderEnabled:false};
+      save();
+      render();
+    });
+}
+
+function save() {
+  localStorage.setItem("softPlanner", JSON.stringify(state));
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+function quote() {
+  let q = state.quotes[Math.floor(Math.random() * state.quotes.length)];
+  $("#quoteBox").textContent = q || "Маленькие шаги тоже важны ♡";
+}
+
+function applyTheme() {
+  document.body.className = state.theme === "pink" ? "" : "theme-" + state.theme;
+}
+
+function dayTasks(day) {
+  return state.tasks.filter(t => t.day === day && !t.archived);
+}
+
+function pct() {
+  let all = state.dailyHabits.length * 7;
+  let done = state.dailyHabits.reduce((n,h) => n + h.done.filter(Boolean).length, 0);
+  return all ? Math.round(done / all * 100) : 0;
+}
+
+function render() {
+  if (!state) return;
+  applyTheme();
+  $("#todayLabel").textContent = today.toLocaleDateString("ru-RU", {
+    weekday:"long", day:"numeric", month:"long", year:"numeric"
+  });
+  $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  let v = $("#view");
+  ({home, week, habits, notes, archive, stats}[tab] || home)(v);
+}
+
+function section(title, sub = "") {
+  return `<div class="row between"><div><h2>${title}</h2>${sub ? `<div class="sub">${sub}</div>` : ""}</div></div>`;
+}
+
+function progress(n) {
+  return `<div class="progress"><i style="width:${Math.max(0,Math.min(100,n))}%"></i></div>`;
+}
+
+function home(v) {
+  let h = state.dailyHabits.reduce((n,x) => n + x.done[selectedDay], 0);
+  let total = state.dailyHabits.length;
+  let ts = dayTasks(selectedDay);
+  v.innerHTML = section("Сегодня","Небольшие шаги — тоже результат") +
+    `<div class="card"><div class="row between"><div><div class="muted">Привычки за день</div><div class="big">${h}/${total}</div></div><div class="big">${total ? Math.round(h/total*100) : 0}%</div></div>${progress(total ? h/total*100 : 0)}</div>
+    <div class="card"><div class="row between"><h3>Выбери день</h3><button class="mini" data-go="week">Вся неделя</button></div>${dayPicker()}</div>
+    <div class="card"><div class="row between"><h3>Привычки</h3><button class="mini" data-go="habits">Изменить</button></div>${state.dailyHabits.map(x => habitRow(x,selectedDay)).join("")}</div>
+    <div class="card"><div class="row between"><h3>Задачи · ${DAYS[selectedDay]}</h3><button class="mini" data-add="task">＋ Добавить</button></div>${taskList(ts)}</div>`;
+}
+
+function dayPicker() {
+  return `<div class="daygrid">${DAYS.map((d,i) =>
+    `<button class="day ${i===selectedDay?"selected":""} ${dayTasks(i).length?"has":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`
+  ).join("")}</div>`;
+}
+
+function habitRow(h,day) {
+  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">⋯</button></div>`;
+}
+
+function taskList(items) {
+  return items.length ? items.map(t =>
+    `<div class="item ${t.done?"done":""}"><button class="check ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini" data-edit-task="${t.id}">✎</button><button class="mini" data-archive-task="${t.id}">▣</button></div>`
+  ).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
+}
+
+function week(v) {
+  v.innerHTML = section("План недели","Календарь и задачи по дням") +
+    `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
+    <div class="card">${dayPicker()}</div>` +
+    DAYS.map((d,i) =>
+      `<div class="card"><div class="row between"><div><b>${d}, ${dateFor(i).getDate()} ${dateFor(i).toLocaleDateString("ru-RU",{month:"short"})}</b><div class="muted">${dayTasks(i).filter(x=>x.done).length}/${dayTasks(i).length} задач выполнено</div></div><button class="mini" data-add="task" data-add-day="${i}">＋</button></div>${taskList(dayTasks(i))}</div>`
+    ).join("");
+}
+
+function habits(v) {
+  v.innerHTML = section("Мои привычки","Меняй список под себя в любое время") +
+    `<div class="card"><div class="row between"><h3>Ежедневные</h3><button class="primary" data-add="habit">＋ Привычка</button></div>` +
+    state.dailyHabits.map(h =>
+      `<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><span class="pill">${h.done.filter(Boolean).length}/7</span><button class="mini" data-edit-habit="${h.id}">Изменить</button><button class="mini" data-archive-habit="${h.id}">▣</button></div>`
+    ).join("") +
+    `</div><div class="card"><div class="row between"><h3>Еженедельные</h3><button class="primary" data-add="weekly">＋ Привычка</button></div>` +
+    state.weeklyHabits.map(h =>
+      `<div class="item"><button class="check ${h.done?"on":""}" data-weekly="${h.id}">${h.done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly="${h.id}">Изменить</button><button class="mini" data-archive-weekly="${h.id}">▣</button></div>`
+    ).join("") + `</div>`;
+}
+
+function notes(v) {
+  let active = state.notes.filter(n => !n.archived);
+  v.innerHTML = section("Заметки","Мысли и важные моменты") +
+    `<div class="card"><button class="primary" data-add="note">＋ Новая заметка</button>` +
+    (active.length ? active.map(n =>
+      `<div class="item"><span class="itemtext">${escapeHtml(n.text)}</span><span class="pill">${DAYS[n.day]||"—"}</span><button class="mini" data-edit-note="${n.id}">✎</button><button class="mini" data-archive-note="${n.id}">▣</button></div>`
+    ).join("") : `<div class="empty">Здесь будут твои заметки ♡</div>`) + `</div>`;
+}
+
+function archive(v) {
+  let a = state.archive || [];
+  v.innerHTML = section("Архив","Записи можно восстановить или удалить навсегда") +
+    `<div class="card"><div class="row between"><b>В архиве: ${a.length}</b><span class="pill">Локально</span></div>` +
+    (a.length ? a.map(x =>
+      `<div class="item"><span class="itemtext"><b>${x.type==="task"?"Задача":x.type==="note"?"Заметка":x.type==="habit"?"Привычка":"Запись"}:</b> ${escapeHtml(x.title||x.text||x.name)}</span><button class="mini" data-restore="${x.id}">♻</button><button class="mini danger" data-purge="${x.id}">🗑</button></div>`
+    ).join("") : `<div class="empty">Архив пока пуст. Удалённые записи появятся здесь.</div>`) + `</div>`;
+}
+
+function stats(v) {
+  let done = state.dailyHabits.reduce((n,h) => n + h.done.filter(Boolean).length, 0);
+  let total = state.dailyHabits.length * 7;
+  let completed = state.tasks.filter(t => t.done && !t.archived).length;
+  v.innerHTML = section("Твой прогресс","Мягко и без гонки за идеалом") +
+    `<div class="grid2"><div class="stat"><span class="muted">Привычки</span><strong>${total ? Math.round(done/total*100) : 0}%</strong><span class="muted">${done} из ${total}</span></div><div class="stat"><span class="muted">Задачи</span><strong>${completed}</strong><span class="muted">выполнено</span></div><div class="stat"><span class="muted">Активные задачи</span><strong>${state.tasks.filter(t=>!t.done&&!t.archived).length}</strong></div><div class="stat"><span class="muted">Заметки</span><strong>${state.notes.filter(n=>!n.archived).length}</strong></div></div>
+    <div class="card"><h3>Ежедневные привычки</h3>${state.dailyHabits.map(h => `<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><b>${h.done.filter(Boolean).length}/7</b></div>`).join("")}</div>`;
+}
+
+function openEdit(type,obj=null,day=selectedDay) {
+  editing = {type,id:obj?.id};
+  $("#dialogTitle").textContent = obj ? "Изменить запись" : "Новая запись";
+  $("#fieldLabel").firstChild.textContent = type==="note" ? "Текст заметки" : type==="task" ? "Название задачи" : "Название привычки";
+  $("#editText").value = obj ? (obj.title || obj.text || obj.name) : "";
+  $("#editDay").innerHTML = DAYS.map((d,i) =>
+    `<option value="${i}" ${i===(obj?.day??day)?"selected":""}>${d}</option>`
+  ).join("");
+  $("#dayField").style.display = ["task","note"].includes(type) ? "block" : "none";
+  $("#editDialog").showModal();
+}
+
+$("#editForm").addEventListener("submit",e => {
+  if (e.submitter?.id !== "saveEdit") return;
+  e.preventDefault();
+  let val = $("#editText").value.trim();
+  if (!val) return;
+  let day = +$("#editDay").value, t = editing.type;
+  let arr = t==="habit" || t==="weekly" ? (t==="habit" ? state.dailyHabits : state.weeklyHabits) : t==="task" ? state.tasks : state.notes;
+  let obj = editing.id ? arr.find(x => x.id === editing.id) : null;
+
+  if (obj) {
+    if (t==="task") obj.title = val;
+    else if (t==="note") obj.text = val;
+    else obj.name = val;
+    if (t==="task" || t==="note") obj.day = day;
+  } else {
+    let id = "u-" + Date.now();
+    if (t==="task") state.tasks.push({id,title:val,day,done:false,archived:false});
+    if (t==="note") state.notes.push({id,text:val,day,archived:false});
+    if (t==="habit") state.dailyHabits.push({id,name:val,done:Array(7).fill(false),frequency:"daily"});
+    if (t==="weekly") state.weeklyHabits.push({id,name:val,done:false,frequency:"weekly"});
+  }
+  save();
+  $("#editDialog").close();
+  render();
 });
-function settings(){let v=$("#view");tab="settings";$("#tabs button").forEach(b=>b.classList.remove("active"));v.innerHTML=section("Настройки","Только на этом устройстве")+`<div class="card"><h3>Оформление</h3><select id="themeSelect"><option value="pink">🌷 Нежно-розовая</option><option value="beige">☕ Бежевая</option><option value="green">🌿 Мятная</option><option value="lavender">💜 Лавандовая</option><option value="dark">🌙 Тёмная</option></select><h3>Напоминание</h3><label><input type="time" id="reminderTime" value="${state.reminder||"20:00"}"></label><button class="primary" id="enableReminder">Включить уведомления</button><p class="muted">Уведомления работают на устройстве; браузер/Android может запросить разрешение.</p></div><div class="card"><h3>Резервная копия</h3><button class="ghost" id="export">Экспортировать данные</button> <label class="ghost" style="display:inline-block">Импортировать<input id="importFile" type="file" accept="application/json" hidden></label><p class="muted">Экспортируй копию, чтобы сохранить записи при смене телефона.</p><button class="ghost danger" id="reset">Сбросить данные</button></div>`;$("#themeSelect").value=state.theme||"pink";$("#themeSelect").onchange=e=>{state.theme=e.target.value;save();applyTheme()};$("#enableReminder").onclick=async()=>{if(!("Notification"in window)){alert("Уведомления не поддерживаются этим браузером.");return}let p=await Notification.requestPermission();if(p==="granted"){state.reminder=$("#reminderTime").value;state.reminderEnabled=true;save();scheduleReminder();alert("Напоминание включено, пока планер доступен на устройстве.")}else alert("Разрешение на уведомления не предоставлено.")};$("#export").onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="moj-planer-backup.json";a.click();URL.revokeObjectURL(a.href)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);save();render();alert("Данные восстановлены.")}catch{alert("Не удалось прочитать файл.")}};r.readAsText(f)};$("#reset").onclick=()=>{if(confirm("Удалить все локальные данные? Сначала сделай резервную копию.")){localStorage.removeItem("softPlanner");location.reload()}}}
-function scheduleReminder(){if(!state.reminderEnabled||!("Notification"in window)||Notification.permission!=="granted")return;let [h,m]=state.reminder.split(":").map(Number),now=new Date(),next=new Date();next.setHours(h,m,0,0);if(next<=now)next.setDate(next.getDate()+1);setTimeout(()=>{new Notification("Мой планер ♡",{body:"Найди минутку, чтобы отметить свой день."});scheduleReminder()},next-now)}
-if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+
+function archiveItem(type,id,arr) {
+  let x = arr.find(o => o.id === id);
+  if (!x) return;
+  arr.splice(arr.indexOf(x),1);
+  state.archive.push({id:"a-"+Date.now(),type,...x,archivedAt:new Date().toISOString()});
+  save();
+  render();
+}
+
+document.addEventListener("click",e => {
+  let b = e.target.closest("button");
+  if (!b) return;
+
+  if (b.dataset.tab) { tab = b.dataset.tab; render(); }
+  if (b.dataset.day !== undefined) { selectedDay = +b.dataset.day; render(); }
+  if (b.dataset.go) { tab = b.dataset.go; render(); }
+  if (b.dataset.week) { weekOffset += +b.dataset.week; render(); }
+  if (b.dataset.add) openEdit(b.dataset.add,null,b.dataset.addDay===undefined ? selectedDay : +b.dataset.addDay);
+
+  if (b.dataset.habit) {
+    let h = state.dailyHabits.find(x => x.id === b.dataset.habit);
+    h.done[+b.dataset.day] = !h.done[+b.dataset.day];
+    save(); render();
+  }
+  if (b.dataset.task) {
+    let t = state.tasks.find(x => x.id === b.dataset.task);
+    t.done = !t.done;
+    if (t.done) t.completedAt = new Date().toISOString();
+    save(); render();
+  }
+  if (b.dataset.weekly) {
+    let h = state.weeklyHabits.find(x => x.id === b.dataset.weekly);
+    h.done = !h.done;
+    save(); render();
+  }
+
+  if (b.dataset.editTask) {
+    let t = state.tasks.find(x => x.id === b.dataset.editTask);
+    openEdit("task",t);
+  }
+  if (b.dataset.archiveTask) archiveItem("task",b.dataset.archiveTask,state.tasks);
+  if (b.dataset.archiveNote) archiveItem("note",b.dataset.archiveNote,state.notes);
+  if (b.dataset.archiveHabit) archiveItem("habit",b.dataset.archiveHabit,state.dailyHabits);
+  if (b.dataset.archiveWeekly) archiveItem("weekly",b.dataset.archiveWeekly,state.weeklyHabits);
+
+  if (b.dataset.editNote) {
+    let n = state.notes.find(x => x.id === b.dataset.editNote);
+    openEdit("note",n);
+  }
+  if (b.dataset.editHabit) {
+    let h = state.dailyHabits.find(x => x.id === b.dataset.editHabit);
+    openEdit("habit",h);
+  }
+  if (b.dataset.editWeekly) {
+    let h = state.weeklyHabits.find(x => x.id === b.dataset.editWeekly);
+    openEdit("weekly",h);
+  }
+
+  if (b.dataset.restore) {
+    let x = state.archive.find(x => x.id === b.dataset.restore);
+    if (x) {
+      state.archive.splice(state.archive.indexOf(x),1);
+      delete x.archivedAt;
+      x.archived = false;
+      if (x.type==="task") state.tasks.push(x);
+      else if (x.type==="note") state.notes.push(x);
+      else if (x.type==="habit") state.dailyHabits.push(x);
+      else if (x.type==="weekly") state.weeklyHabits.push(x);
+      else state.tasks.push(x);
+      save(); render();
+    }
+  }
+
+  if (b.dataset.purge) {
+    if (confirm("Удалить запись окончательно?")) {
+      state.archive = state.archive.filter(x => x.id !== b.dataset.purge);
+      save(); render();
+    }
+  }
+
+  if (b.id==="quoteBtn") quote();
+  if (b.id==="settingsBtn") settings();
+});
+
+function settings() {
+  let v = $("#view");
+  tab = "settings";
+  $$("#tabs button").forEach(b => b.classList.remove("active"));
+  v.innerHTML = section("Настройки","Только на этом устройстве") +
+    `<div class="card"><h3>Оформление</h3><select id="themeSelect"><option value="pink">🌷 Нежно-розовая</option><option value="beige">☕ Бежевая</option><option value="green">🌿 Мятная</option><option value="lavender">💜 Лавандовая</option><option value="dark">🌙 Тёмная</option></select><h3>Напоминание</h3><label><input type="time" id="reminderTime" value="${state.reminder||"20:00"}"></label><button class="primary" id="enableReminder">Включить уведомления</button><p class="muted">Уведомления работают на устройстве; браузер/Android может запросить разрешение.</p></div>
+    <div class="card"><h3>Резервная копия</h3><button class="ghost" id="export">Экспортировать данные</button> <label class="ghost" style="display:inline-block">Импортировать<input id="importFile" type="file" accept="application/json" hidden></label><p class="muted">Экспортируй копию, чтобы сохранить записи при смене телефона.</p><button class="ghost danger" id="reset">Сбросить данные</button></div>`;
+
+  $("#themeSelect").value = state.theme || "pink";
+  $("#themeSelect").onchange = e => { state.theme=e.target.value; save(); applyTheme(); };
+
+  $("#enableReminder").onclick = async () => {
+    if (!("Notification" in window)) { alert("Уведомления не поддерживаются этим браузером."); return; }
+    let p = await Notification.requestPermission();
+    if (p==="granted") {
+      state.reminder = $("#reminderTime").value;
+      state.reminderEnabled = true;
+      save(); scheduleReminder();
+      alert("Напоминание включено, пока планер доступен на устройстве.");
+    } else alert("Разрешение на уведомления не предоставлено.");
+  };
+
+  $("#export").onclick = () => {
+    let blob = new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "moj-planer-backup.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $("#importFile").onchange = e => {
+    let f = e.target.files[0];
+    if (!f) return;
+    let r = new FileReader();
+    r.onload = () => {
+      try {
+        state = JSON.parse(r.result);
+        save(); render();
+        alert("Данные восстановлены.");
+      } catch {
+        alert("Не удалось прочитать файл.");
+      }
+    };
+    r.readAsText(f);
+  };
+
+  $("#reset").onclick = () => {
+    if (confirm("Удалить все локальные данные? Сначала сделай резервную копию.")) {
+      localStorage.removeItem("softPlanner");
+      location.reload();
+    }
+  };
+}
+
+function scheduleReminder() {
+  if (!state.reminderEnabled || !("Notification" in window) || Notification.permission!=="granted") return;
+  let [h,m] = state.reminder.split(":").map(Number);
+  let now = new Date(), next = new Date();
+  next.setHours(h,m,0,0);
+  if (next <= now) next.setDate(next.getDate()+1);
+  setTimeout(() => {
+    new Notification("Мой планер ♡",{body:"Найди минутку, чтобы отметить свой день."});
+    scheduleReminder();
+  }, next-now);
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load",() => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
 fetch("seed.json")
   .then(r => {
     if (!r.ok) throw new Error("Не удалось загрузить seed.json");
@@ -58,13 +366,7 @@ fetch("seed.json")
     if (existing) {
       state = JSON.parse(existing);
     } else {
-      state = {
-        ...seed,
-        archive: [],
-        theme: "pink",
-        reminder: "20:00",
-        reminderEnabled: false
-      };
+      state = {...seed, archive:[], theme:"pink", reminder:"20:00", reminderEnabled:false};
     }
     save();
     quote();
@@ -72,9 +374,6 @@ fetch("seed.json")
     scheduleReminder();
   })
   .catch(error => {
-    console.error("Ошибка планера:", error);
-    $("#view").innerHTML =
-      "<p>Не удалось запустить планер. Ошибка: " +
-      escapeHtml(error.message) +
-      "</p>";
+    console.error("Ошибка планера:",error);
+    $("#view").innerHTML = "<p>Не удалось запустить планер. Ошибка: " + escapeHtml(error.message) + "</p>";
   });
