@@ -48,4 +48,33 @@ if(b.id==="quoteBtn")quote();if(b.id==="settingsBtn")settings();
 function settings(){let v=$("#view");tab="settings";$("#tabs button").forEach(b=>b.classList.remove("active"));v.innerHTML=section("Настройки","Только на этом устройстве")+`<div class="card"><h3>Оформление</h3><select id="themeSelect"><option value="pink">🌷 Нежно-розовая</option><option value="beige">☕ Бежевая</option><option value="green">🌿 Мятная</option><option value="lavender">💜 Лавандовая</option><option value="dark">🌙 Тёмная</option></select><h3>Напоминание</h3><label><input type="time" id="reminderTime" value="${state.reminder||"20:00"}"></label><button class="primary" id="enableReminder">Включить уведомления</button><p class="muted">Уведомления работают на устройстве; браузер/Android может запросить разрешение.</p></div><div class="card"><h3>Резервная копия</h3><button class="ghost" id="export">Экспортировать данные</button> <label class="ghost" style="display:inline-block">Импортировать<input id="importFile" type="file" accept="application/json" hidden></label><p class="muted">Экспортируй копию, чтобы сохранить записи при смене телефона.</p><button class="ghost danger" id="reset">Сбросить данные</button></div>`;$("#themeSelect").value=state.theme||"pink";$("#themeSelect").onchange=e=>{state.theme=e.target.value;save();applyTheme()};$("#enableReminder").onclick=async()=>{if(!("Notification"in window)){alert("Уведомления не поддерживаются этим браузером.");return}let p=await Notification.requestPermission();if(p==="granted"){state.reminder=$("#reminderTime").value;state.reminderEnabled=true;save();scheduleReminder();alert("Напоминание включено, пока планер доступен на устройстве.")}else alert("Разрешение на уведомления не предоставлено.")};$("#export").onclick=()=>{let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="moj-planer-backup.json";a.click();URL.revokeObjectURL(a.href)};$("#importFile").onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);save();render();alert("Данные восстановлены.")}catch{alert("Не удалось прочитать файл.")}};r.readAsText(f)};$("#reset").onclick=()=>{if(confirm("Удалить все локальные данные? Сначала сделай резервную копию.")){localStorage.removeItem("softPlanner");location.reload()}}}
 function scheduleReminder(){if(!state.reminderEnabled||!("Notification"in window)||Notification.permission!=="granted")return;let [h,m]=state.reminder.split(":").map(Number),now=new Date(),next=new Date();next.setHours(h,m,0,0);if(next<=now)next.setDate(next.getDate()+1);setTimeout(()=>{new Notification("Мой планер ♡",{body:"Найди минутку, чтобы отметить свой день."});scheduleReminder()},next-now)}
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-fetch("seed.json").then(r=>r.json()).then(seed=>{let existing=localStorage.getItem("softPlanner");if(existing)state=JSON.parse(existing);else state={...seed,archive:[],theme:"pink",reminder:"20:00",reminderEnabled:false};save();quote();render();scheduleReminder()});
+fetch("seed.json")
+  .then(r => {
+    if (!r.ok) throw new Error("Не удалось загрузить seed.json");
+    return r.json();
+  })
+  .then(seed => {
+    let existing = localStorage.getItem("softPlanner");
+    if (existing) {
+      state = JSON.parse(existing);
+    } else {
+      state = {
+        ...seed,
+        archive: [],
+        theme: "pink",
+        reminder: "20:00",
+        reminderEnabled: false
+      };
+    }
+    save();
+    quote();
+    render();
+    scheduleReminder();
+  })
+  .catch(error => {
+    console.error("Ошибка планера:", error);
+    $("#view").innerHTML =
+      "<p>Не удалось запустить планер. Ошибка: " +
+      escapeHtml(error.message) +
+      "</p>";
+  });
