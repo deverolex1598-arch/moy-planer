@@ -104,10 +104,11 @@
         setSignedIn(session.user);
         await loadUserData(session.user);
       }
-      client.auth.onAuthStateChange(async (_event, session) => {
+      client.auth.onAuthStateChange((_event, session) => {
         if (session?.user && !window.plannerCurrentUserId) {
           setSignedIn(session.user);
-          await loadUserData(session.user);
+          // Run database requests after the auth callback releases its internal lock.
+          setTimeout(() => loadUserData(session.user), 0);
         } else if (!session) {
           ready = false; setSignedIn(null);
         }
