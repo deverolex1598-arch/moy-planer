@@ -1,0 +1,40 @@
+(() => {
+"use strict";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const key=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const date=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
+const plus=(s,n)=>{const d=date(s);d.setDate(d.getDate()+n);return key(d)};
+const diff=(a,b)=>Math.round((date(b)-date(a))/86400000);
+const validDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(date(s).getTime())&&key(date(s))===s;
+const today=key(new Date());
+const cdata=()=>{state.cycle=state.cycle||{periods:[],logs:{},customSymptoms:[],forecastOverride:""};let c=state.cycle;c.periods=Array.isArray(c.periods)?c.periods:[];c.logs=c.logs||{};c.customSymptoms=c.customSymptoms||[];return c};
+const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
+const intervals=c=>{const p=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));return p.slice(1).map((x,i)=>diff(p[i].start,x.start)).filter(n=>n>=15&&n<=60)};
+const prediction=c=>{const p=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));return c.forecastOverride|| (p.length?plus(p[p.length-1].start,avg(intervals(c))||28):"")};
+const select=(n,l,opts,val)=>'<label>'+l+'<select name="'+n+'"><option value="">Не отмечено</option>'+opts.map(x=>'<option '+(x===val?'selected':'')+'>'+x+'</option>').join("")+'</select></label>';
+function cycleTab(v){
+ const c=cdata(),p=c.periods.slice().sort((a,b)=>b.start.localeCompare(a.start)),next=prediction(c),a=avg(intervals(c)),day=window.cycleLogDay||today,log=c.logs[day]||{};
+ const symptoms=[...new Set(["Спазмы","Головная боль","Вздутие","Акне","Чувствительность груди","Тошнота","Усталость",...c.customSymptoms])];
+ v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+
+ '<div class="card cycle-card"><h3>Следующая менструация</h3><div class="cycle-forecast"><strong>'+(next?esc(date(next).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})):"Пока нет прогноза")+'</strong><span>Приблизительная дата, не медицинское заключение</span></div><label>Исправить прогноз<input id="cycleForecast" type="date" value="'+esc(next)+'"></label><button class="ghost" data-cycle-forecast>Сохранить дату</button></div>'+
+ '<div class="card cycle-card"><h3>История цикла</h3><form id="periodForm" class="cycle-form"><label>Первый день<input name="start" type="date" required></label><label>Последний день<input name="end" type="date"></label><button class="primary">＋ Сохранить даты</button></form><div class="cycle-stats"><div><b>'+(a?a+" дн.":"—")+'</b><span>средняя длина цикла</span></div><div><b>'+p.length+'</b><span>записей в истории</span></div></div>'+
+ (p.length?'<h3>Прошлые циклы</h3>'+p.map(x=>'<div class="item"><span class="itemtext">'+esc(x.start)+'<small>'+(x.end?' — '+esc(x.end):'')+'</small></span><button class="mini" data-period-edit="'+esc(x.id)+'">Изменить</button><button class="mini" data-period-delete="'+esc(x.id)+'">×</button></div>').join(""):'<div class="empty">Здесь появится история ♡</div>')+
+ (next?'<button class="primary" data-cycle-new>Начался новый цикл?</button>':'')+'</div>'+
+ '<div class="card cycle-card"><h3>Ежедневное самочувствие</h3><label>Дата<input id="cycleLogDate" type="date" value="'+esc(day)+'"></label><form id="cycleLogForm">'+
+ select("pain","Боль",["Нет","Лёгкая","Умеренная","Сильная"],log.pain)+select("bleeding","Объём выделений",["Нет","Мажущие","Слабые","Умеренные","Обильные"],log.bleeding)+select("mood","Настроение",["Отличное","Хорошее","Нейтральное","Грустное","Тревожное","Раздражительное"],log.mood)+select("energy","Энергия",["Очень низкая","Низкая","Средняя","Высокая"],log.energy)+select("sleep","Сон",["Плохой","Средний","Хороший","Отличный"],log.sleep)+select("appetite","Аппетит",["Сниженный","Обычный","Повышенный"],log.appetite)+
+ '<fieldset><legend>Симптомы</legend><div class="cycle-symptoms">'+symptoms.map(s=>'<label><input type="checkbox" name="symptoms" value="'+esc(s)+'" '+((log.symptoms||[]).includes(s)?'checked':'')+'> '+esc(s)+'</label>').join("")+'</div></fieldset><label>Добавить свой симптом<input id="customSymptom" placeholder="Например, чувствительность к запахам"></label><button type="button" class="ghost" data-cycle-add>Добавить симптом</button><label>Лекарства / контрацепция (необязательно)<input name="medication" value="'+esc(log.medication||"")+'"></label><label>Заметки<textarea name="notes" rows="3">'+esc(log.notes||"")+'</textarea></label><button class="primary">Сохранить наблюдение</button></form></div>';
+}
+window.cycleTab=cycleTab;window.cycleLogDay=today;
+document.addEventListener("change",e=>{if(e.target.id==="cycleLogDate"){window.cycleLogDay=e.target.value;cycleTab(document.querySelector("#view"));}});
+document.addEventListener("submit",e=>{
+ if(e.target.id==="periodForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target),start=f.get("start"),end=f.get("end");if(!validDate(start)|| (end&&!validDate(end)))return alert("Проверь дату начала и окончания.");if(end&&end<start)return alert("Дата окончания раньше начала.");if(c.periods.some(x=>x.start===start))return alert("Такая дата начала уже есть в истории.");c.periods.push({id:Date.now().toString(36),start,end:end||""});c.forecastOverride="";save();cycleTab($("#view"));}
+ if(e.target.id==="cycleLogForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target);c.logs[window.cycleLogDay]={pain:f.get("pain"),bleeding:f.get("bleeding"),mood:f.get("mood"),energy:f.get("energy"),sleep:f.get("sleep"),appetite:f.get("appetite"),symptoms:f.getAll("symptoms"),medication:f.get("medication"),notes:f.get("notes")};save();cycleTab($("#view"));}
+});
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const c=cdata();
+ if(b.hasAttribute("data-cycle-forecast")){const v=$("#cycleForecast").value;if(v&&!validDate(v))return alert("Укажи корректную дату прогноза.");c.forecastOverride=v;save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){if(c.periods.some(x=>x.start===today))return alert("Сегодняшняя дата уже записана в истории.");c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-period-delete")&&confirm("Удалить запись из истории?")){c.periods=c.periods.filter(x=>x.id!==b.dataset.periodDelete);save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-period-edit")){const p=c.periods.find(x=>x.id===b.dataset.periodEdit);if(!p)return;const s=prompt("Дата начала (ГГГГ-ММ-ДД)",p.start);if(s===null)return;const end=prompt("Последний день (можно пусто)",p.end||"");if(end===null)return;if(!validDate(s)||(end&&!validDate(end)))return alert("Проверь формат дат: ГГГГ-ММ-ДД.");if(end&&end<s)return alert("Дата окончания раньше начала.");if(c.periods.some(x=>x.id!==p.id&&x.start===s))return alert("Такая дата начала уже есть в истории.");p.start=s;p.end=end;c.forecastOverride="";save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-cycle-add")){const i=$("#customSymptom"),s=i.value.trim();if(s&&!c.customSymptoms.includes(s)){c.customSymptoms.push(s);save();cycleTab($("#view"));}}
+});
+})();

@@ -45,8 +45,18 @@ function normalizeState(data) {
 }
 
 function save() {
-  localStorage.setItem("softPlanner", JSON.stringify(state));
+  const userId = window.plannerCurrentUserId;
+  const key = userId ? "softPlanner:user:" + userId : "softPlanner";
+  localStorage.setItem(key, JSON.stringify(state));
+  if (userId && typeof window.plannerCloudSave === "function") window.plannerCloudSave(state);
 }
+
+window.addEventListener("planner-cloud-load", event => {
+  state = normalizeState(event.detail || {});
+  save();
+  quote();
+  render();
+});
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
@@ -81,7 +91,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, calendar, habits, notes, archive, stats}[tab] || home)(v);
+  ({home, week, calendar, habits, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -104,6 +114,12 @@ function home(v) {
  <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
  ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
  <div class="quick-add"><button class="ghost" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button></div>`;
+}
+
+
+function more(v) {
+  v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
+    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
 }
 
 function dayPicker() {
@@ -414,7 +430,7 @@ $("#editDialog")?.addEventListener("close", () => {
 $("#quoteBtn")?.addEventListener("click", quote);
 
 function init() {
-  const saved = localStorage.getItem("softPlanner");
+  const saved = localStorage.getItem(window.plannerCurrentUserId ? "softPlanner:user:" + window.plannerCurrentUserId : "softPlanner");
   if (saved) {
     try {
       state = normalizeState(JSON.parse(saved));
@@ -423,24 +439,22 @@ function init() {
       state = normalizeState({});
     }
     render();
-  } else {
-    fetch("seed.json")
-
-
-.then(r => r.ok ? r.json() : {})
-      .then(data => {
-        state = normalizeState(data);
-        quote();
-        save();
-        render();
-      })
-      .catch(() => {
-        state = normalizeState({});
-        quote();
-        save();
-        render();
-      });
+    return Promise.resolve();
   }
+  return fetch("seed.json")
+    .then(r => r.ok ? r.json() : {})
+    .then(data => {
+      state = normalizeState(data);
+      quote();
+      save();
+      render();
+    })
+    .catch(() => {
+      state = normalizeState({});
+      quote();
+      save();
+      render();
+    });
 }
 
 $("#settingsBtn")?.addEventListener("click", () => {
@@ -460,4 +474,4 @@ document.addEventListener("click", e => {
   $("#view").querySelectorAll("[data-theme]").forEach(x => x.classList.toggle("active",x.dataset.theme === state.theme));
 });
 
-init();
+window.plannerAppReady = init();
