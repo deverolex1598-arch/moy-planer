@@ -136,6 +136,7 @@ function render() {
   const tabButtons = $$("#tabs button");
   tabButtons.forEach(b => {
     b.hidden = hiddenTabs.includes(b.dataset.tab);
+    if (!b.hidden) b.classList.remove("is-hiding");
     b.setAttribute("aria-hidden", String(b.hidden));
     b.classList.toggle("active", b.dataset.tab === tab);
   });
@@ -378,11 +379,16 @@ document.addEventListener("click", e => {
       if (tab === id) tab = "home";
       save();
       setTimeout(() => {
-        if (navButton) navButton.hidden = true;
+        if (state.hiddenTabs.includes(id) && navButton) navButton.hidden = true;
         render();
       }, 260);
     } else {
       state.hiddenTabs = state.hiddenTabs.filter(x => x !== id);
+      if (navButton) {
+        navButton.hidden = false;
+        navButton.classList.remove("is-hiding");
+        navButton.setAttribute("aria-hidden", "false");
+      }
       save();
       render();
     }
