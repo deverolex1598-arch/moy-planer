@@ -22,6 +22,7 @@
     await (window.plannerAppReady || Promise.resolve());
     // Never leave the previous guest's planner visible while this account is loading.
     const cacheKey = "softPlanner:user:" + user.id;
+    const hadCachedState = localStorage.getItem(cacheKey) !== null;
     let cachedState = {};
     try { cachedState = JSON.parse(localStorage.getItem(cacheKey) || "{}") || {}; } catch (_) { cachedState = {}; }
     window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: cachedState }));
@@ -31,7 +32,7 @@
       window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: data.data }));
       status("Твои личные записи загружены и защищены аккаунтом.");
     } else {
-      const cached = localStorage.getItem("softPlanner:user:" + user.id);
+      const cached = hadCachedState ? localStorage.getItem(cacheKey) : null;
       const guest = localStorage.getItem("softPlanner");
       let initial = {};
       if (cached) {
