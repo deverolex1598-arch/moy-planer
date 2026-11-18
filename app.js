@@ -121,7 +121,8 @@ function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
     `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
 }
-\nfunction dayPicker() {
+
+function dayPicker() {
   return `<div class="daygrid">${DAYS.map
 
 
