@@ -4,7 +4,7 @@ const FULL = ["Понедельник","Вторник","Среда","Четве
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
-let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null;
+let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null, calendarMonthOffset = 0, selectedCalendarDate = dateKey(new Date());
 
 const today = new Date();
 const monday = d => {
@@ -33,6 +33,7 @@ function normalizeState(data) {
   s.weeklyHabits = Array.isArray(s.weeklyHabits) ? s.weeklyHabits : [];
   s.notes = Array.isArray(s.notes) ? s.notes : [];
   s.diaryEntries = Array.isArray(s.diaryEntries) ? s.diaryEntries : [];
+  s.calendarEntries = Array.isArray(s.calendarEntries) ? s.calendarEntries : [];
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
   s.theme = s.theme || "pink";
@@ -113,7 +114,7 @@ function render() {
     b.classList.toggle("active", b.dataset.tab === tab);
   });
   let v = $("#view");
-  ({home, week, settings: settingsView, cycle: window.cycleTab, diary, calendar}[tab] || home)(v);
+  ({home, week, calendar, cycle: window.cycleTab, diary, settings: settingsView}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -213,16 +214,30 @@ function diary(v) {
 }
 
 function calendar(v){
- const items=dayTasks(selectedDay),td=(today.getDay()+6)%7,ns=state.notes.filter(n=>Number(n.day??selectedDay)===selectedDay&&!n.archived),wh=state.weeklyHabits||[];
- v.innerHTML=section("Календарь","Нажми на день, чтобы посмотреть всё самое важное")+
- `<div class="card"><div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>${dayPicker()}</div>
- <div class="card"><div class="row between"><div><h3>♡ ${FULL[selectedDay]}</h3><div class="muted">${dateFor(selectedDay).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><span class="pill">${selectedDay===td?"Сегодня":"Выбранный день"}</span></div>
- <h3>Планы</h3>${taskList(items)}<h3>Привычки</h3>${state.dailyHabits.map(h=>habitRow(h,selectedDay)).join("")||'<div class="empty">Нет привычек</div>'}
- <h3>Дела на неделю</h3>${wh.map(x=>`<div class="item"><span class="itemtext">${escapeHtml(x.name)}</span><span class="pill">${x.done?"Выполнено":"В планах"}</span></div>`).join("")||'<div class="empty">Нет недельных дел</div>'}
- <h3>Заметки</h3>${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p></div>`).join("")||'<div class="empty">Заметок пока нет</div>'}
- <button class="primary" data-add="task" data-add-day="${selectedDay}">＋ Добавить план</button></div>`;
+  const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
+  const year = month.getFullYear(), monthIndex = month.getMonth();
+  const monthName = month.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
+  const firstOffset = (month.getDay()+6)%7;
+  const daysInMonth = new Date(year,monthIndex+1,0).getDate();
+  const cells = Array.from({length:Math.ceil((firstOffset+daysInMonth)/7)*7},(_,i)=>{
+    const dayNum=i-firstOffset+1;
+    if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
+    const d=new Date(year,monthIndex,dayNum), key=dateKey(d);
+    const entries=(state.calendarEntries||[]).filter(x=>x.date===key);
+    const tasks=state.tasks.filter(x=>Number(x.day)===((d.getDay()+6)%7)&&!x.archived);
+    const isToday=key===dateKey(today), selected=key===selectedCalendarDate;
+    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length||tasks.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?'<i></i>':tasks.length?'<i class="task-dot"></i>':''}</button>`;
+  }).join("");
+  const selected = new Date(selectedCalendarDate+"T12:00:00");
+  const selectedLabel = selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const entries=(state.calendarEntries||[]).filter(x=>x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
+  const types={birthday:"🎂 День рождения",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
+  v.innerHTML=section("Календарь","Месяц целиком — выбирай день и сохраняй важное ♡")+
+    `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
+    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span><i></i> Событие</span><span><i class="task-dot"></i> Есть планы</span></div></div>
+    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Заметки и важные даты этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
+    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini" data-edit-calendar="${x.id}">Изменить</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">Пока нет событий. Добавь день рождения, встречу, напоминание или просто заметку ♡</div>'}</div>`;
 }
-
 function habits(v) {
   const weekly=state.weeklyHabits||[];
   v.innerHTML=section("Мои привычки","Ежедневные ритуалы и дела на всю неделю ♡")+
@@ -269,7 +284,8 @@ function openEditor(type,item = {}) {
     habit: `<label>Название привычки<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
     weeklyHabit: `<label>Дело на неделю<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
     note: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Текст<textarea name="text" rows="5">${escapeHtml(item.text || "")}</textarea></label>`,
-    diary: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Запись<textarea name="text" rows="7" required>${escapeHtml(item.text || "")}</textarea></label>`
+    diary: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Запись<textarea name="text" rows="7" required>${escapeHtml(item.text || "")}</textarea></label>`,
+    calendarEntry: `<label>Что отмечаем?<select name="kind">${[["birthday","🎂 День рождения"],["anniversary","💞 Годовщина"],["reminder","📌 Напоминание"],["appointment","🩺 Встреча / запись"],["holiday","🎉 Праздник"],["trip","✈️ Поездка"],["other","✿ Другое"]].map(([v,l])=>`<option value="${v}" ${(item.kind||"reminder")===v?"selected":""}>${l}</option>`).join("")}</select></label><label>Название<input name="title" required maxlength="100" value="${escapeHtml(item.title||"")}"></label><label>Заметка<textarea name="note" rows="4">${escapeHtml(item.note||"")}</textarea></label><label>Дата<input type="date" name="date" required value="${escapeHtml(item.date||selectedCalendarDate)}"></label>`
   };
   form.innerHTML = (fields[type] || "") + `<div class="form-actions"><button type="button" class="ghost" id="cancelEdit">Отмена</button><button type="submit" class="primary" id="saveEdit">Сохранить</button></div>`;
   $("#editDialog").showModal();
@@ -295,6 +311,7 @@ function handleAdd(type,day = selectedDay) {
   else if (type === "weeklyHabit") openEditor("weeklyHabit");
   else if (type === "note") openEditor("note",{day});
   else if (type === "diary") openEditor("diary");
+  else if (type === "calendarEntry") openEditor("calendarEntry",{date:day});
 }
 
 
@@ -337,6 +354,13 @@ document.addEventListener("click", e => {
     render();
     return;
   }
+
+  if (b.dataset.monthShift) { calendarMonthOffset += Number(b.dataset.monthShift); render(); return; }
+  if (b.dataset.calendarDate) { selectedCalendarDate=b.dataset.calendarDate; render(); return; }
+  if (b.dataset.addCalendar) { selectedCalendarDate=b.dataset.addCalendar; openEditor("calendarEntry",{date:selectedCalendarDate}); return; }
+  if (b.dataset.calendarDone) { const x=byId(state.calendarEntries,b.dataset.calendarDone); if(x){x.done=!x.done;save();render();} return; }
+  if (b.dataset.editCalendar) { const x=byId(state.calendarEntries,b.dataset.editCalendar); if(x)openEditor("calendarEntry",x); return; }
+  if (b.dataset.deleteCalendar) { state.calendarEntries=state.calendarEntries.filter(x=>String(x.id)!==b.dataset.deleteCalendar); save(); render(); return; }
 
   if (b.dataset.day !== undefined && !b.dataset.habit) {
     selectedDay = Number(b.dataset.day);
@@ -519,6 +543,14 @@ document.addEventListener("submit", e => {
     state.diaryEntries=Array.isArray(state.diaryEntries)?state.diaryEntries:[];
     if(id){const entry=byId(state.diaryEntries,id);if(entry)Object.assign(entry,values,{updatedAt:new Date().toISOString()});}
     else state.diaryEntries.unshift({id:newId(),title:values.title,text:values.text,createdAt:new Date().toISOString()});
+  }
+
+  if (type === "calendarEntry") {
+    state.calendarEntries=Array.isArray(state.calendarEntries)?state.calendarEntries:[];
+    if(id){const entry=byId(state.calendarEntries,id);if(entry)Object.assign(entry,values,{updatedAt:new Date().toISOString()});}
+    else state.calendarEntries.push({id:newId(),kind:values.kind,title:values.title,note:values.note,date:values.date,done:false,createdAt:new Date().toISOString()});
+    selectedCalendarDate=values.date||selectedCalendarDate;
+    calendarMonthOffset=(new Date(selectedCalendarDate+"T12:00:00").getFullYear()-today.getFullYear())*12+(new Date(selectedCalendarDate+"T12:00:00").getMonth()-today.getMonth());
   }
 
   if (type === "note") {
