@@ -236,3 +236,6 @@ body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9c
 .calendar-entry p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--muted);margin:6px 0}
 .calendar-entry.is-done>strong{text-decoration:line-through;opacity:.6}
 @media(max-width:390px){.month-grid{gap:3px}.month-day{min-height:39px;border-radius:9px}}
+
+/* Пять основных разделов в нижней навигации */
+nav{grid-template-columns:repeat(5,minmax(0,1fr))}
