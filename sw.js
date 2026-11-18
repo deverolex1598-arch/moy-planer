@@ -1,5 +1,6 @@
-const CACHE = "soft-planner-v9";
+const CACHE = "soft-planner-v10";
 const FILES = ["./", "index.html", "style.css", "app.js", "cycle.js", "auth.js", "seed.json", "manifest.webmanifest", "icon.svg"];
+const FRESH_FILES = new Set(["/", "/index.html", "/style.css", "/app.js", "/cycle.js", "/auth.js", "/seed.json"]);
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
@@ -30,6 +31,20 @@ self.addEventListener("fetch", event => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith((async () => {
+    const isFreshFile = FRESH_FILES.has(url.pathname);
+    if (isFreshFile) {
+      try {
+        const response = await fetch(event.request, { cache: "no-store" });
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
+        }
+        return response;
+      } catch (error) {
+        return (await caches.match(event.request)) || (event.request.mode === "navigate" ? (await caches.match("./index.html")) : Response.error());
+      }
+    }
+
     const cached = await caches.match(event.request);
     if (cached) return cached;
     try {
