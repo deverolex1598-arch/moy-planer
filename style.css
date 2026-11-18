@@ -73,7 +73,7 @@ body{background:radial-gradient(ellipse at 10% 0%,#ffe8eb 0,transparent 38%),var
 
 /* Дополнительный уютный декор и ровная навигация */
 .quote{padding:17px 42px 17px 18px;border-radius:22px;box-shadow:0 7px 20px rgba(190,117,137,.08)}
-.quote:after{content:"🐈";position:absolute;right:13px;bottom:7px;font-size:25px;line-height:1;filter:drop-shadow(0 3px 3px rgba(170,105,124,.16))}
+
 .card{position:relative;overflow:hidden}
 .card:after{content:"✿";position:absolute;right:12px;top:7px;color:#efc4ce;font-size:18px;opacity:.8;pointer-events:none}
 .card h2,.card h3{position:relative}
@@ -102,3 +102,6 @@ footer{flex-wrap:wrap;gap:8px}
 
 .more-links{display:grid;grid-template-columns:1fr 1fr;gap:9px}.more-links button{min-height:48px}
 nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+/* Monthly cycle calendar */
+.cycle-month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}.cycle-month-title{font-weight:800;color:var(--ink);text-transform:capitalize}.cycle-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.cycle-weekday{text-align:center;color:var(--muted);font-size:10px;padding:4px 0}.cycle-date{min-height:42px;border:1px solid var(--line);border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;font-size:12px;color:var(--ink)}.cycle-date.outside{opacity:.3}.cycle-date.today{outline:2px solid var(--accent);outline-offset:1px}.cycle-date.actual{background:#e9a0b3;border-color:#e9a0b3;color:white;font-weight:800}.cycle-date.forecast{background:#f9dce4;border:1px dashed #d9829a;color:#8e5365;font-weight:800}.cycle-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:11px}.cycle-legend span{display:flex;align-items:center;gap:5px}.cycle-dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#e9a0b3}.cycle-dot.forecast{background:#f9dce4;border:1px dashed #d9829a}
