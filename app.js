@@ -95,7 +95,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, habits, care, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
+  ({home, week, settings: settingsView, cycle: window.cycleTab}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -140,6 +140,18 @@ function care(v) {
     ${notes.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("")||'<div class="empty">Сохраняй здесь мысли, идеи и важные моменты.</div>'}</div>
     <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button><button class="ghost" data-go="archive">▣ Архив задач</button></div>`;
 }
+function settingsView(v) {
+  const themes = ["brown","beige","green","lavender"];
+  const labels = ["Шоколадная","Бежевая","Зелёная","Лавандовая"];
+  const weekly = state.weeklyHabits || [];
+  v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
+    `<div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
+    <div class="card"><div class="row between"><h3>Редактирование привычек</h3><button class="mini" data-add="habit">＋ Добавить</button></div>
+    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">Изменить</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
+    <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">Изменить</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+}
+
 function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
     `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
@@ -504,10 +516,7 @@ function init() {
 
 $("#settingsBtn")?.addEventListener("click", () => {
   tab = "settings";
-  const themes = ["brown","beige","green","lavender"];
-  const labels = ["Шоколадная","Бежевая","Зелёная","Лавандовая"];
-  $("#view").innerHTML = section("Настройки","Выбери оформление планера") +
-    `<div class="card"><h3>Темы</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>`;
+  render();
 });
 
 document.addEventListener("click", e => {
