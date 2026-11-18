@@ -109,10 +109,13 @@ function render() {
   });
   const hiddenTabs = state.hiddenTabs || [];
   if (hiddenTabs.includes(tab)) tab = "home";
-  $$("#tabs button").forEach(b => {
+  const tabButtons = $("#tabs button");
+  tabButtons.forEach(b => {
     b.hidden = hiddenTabs.includes(b.dataset.tab);
+    b.setAttribute("aria-hidden", String(b.hidden));
     b.classList.toggle("active", b.dataset.tab === tab);
   });
+  $("#tabs").style.setProperty("--visible-tabs", Math.max(1, tabButtons.filter(b => !b.hidden).length));
   let v = $("#view");
   ({home, week, calendar, cycle: window.cycleTab, diary, settings: settingsView}[tab] || home)(v);
 }
