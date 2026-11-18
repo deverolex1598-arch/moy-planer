@@ -326,12 +326,25 @@ document.addEventListener("click", e => {
   if (b.dataset.toggleTab) {
     const id = b.dataset.toggleTab;
     state.hiddenTabs = Array.isArray(state.hiddenTabs) ? state.hiddenTabs : [];
-    state.hiddenTabs = state.hiddenTabs.includes(id)
-      ? state.hiddenTabs.filter(x => x !== id)
-      : [...state.hiddenTabs, id];
-    if (state.hiddenTabs.includes(tab)) tab = "home";
-    save();
-    render();
+    const shouldHide = !state.hiddenTabs.includes(id);
+    if (shouldHide) {
+      const navButton = document.querySelector('#tabs button[data-tab="' + id + '"]');
+      if (navButton) {
+        navButton.classList.add("is-hiding");
+        navButton.setAttribute("aria-hidden", "true");
+      }
+      state.hiddenTabs = [...state.hiddenTabs, id];
+      if (tab === id) tab = "home";
+      save();
+      setTimeout(() => {
+        if (navButton) navButton.hidden = true;
+        render();
+      }, 260);
+    } else {
+      state.hiddenTabs = state.hiddenTabs.filter(x => x !== id);
+      save();
+      render();
+    }
     return;
   }
 
