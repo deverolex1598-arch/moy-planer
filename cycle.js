@@ -19,7 +19,7 @@ function monthCalendar(c){
  const periods=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));
  const latest=periods[periods.length-1];
  const forecast=prediction(c); const bleedLen=latest&&latest.end?Math.max(1,Math.min(10,diff(latest.start,latest.end)+1)):5;
- const actualDays=new Set(); periods.forEach(p=>{if(!p.end)return;for(let d=p.start;d<=p.end;d=plus(d,1))actualDays.add(d);});
+ const actualDays=new Set(); periods.forEach(p=>{if(!p.end){actualDays.add(p.start);return;}for(let d=p.start;d<=p.end;d=plus(d,1))actualDays.add(d);});
  const forecastDays=new Set(); if(forecast){for(let i=0;i<bleedLen;i++)forecastDays.add(plus(forecast,i));}
  const labels=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
  let html='<div class="card cycle-card"><div class="cycle-month-head"><button class="ghost" type="button" data-cycle-month="-1">‹</button><b class="cycle-month-title">'+esc(base.toLocaleDateString("ru-RU",{month:"long",year:"numeric"}))+'</b><button class="ghost" type="button" data-cycle-month="1">›</button></div><div class="cycle-month-grid">'+labels.map(x=>'<div class="cycle-weekday">'+x+'</div>').join("");
