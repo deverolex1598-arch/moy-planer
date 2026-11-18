@@ -91,7 +91,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, calendar, habits, notes, archive, stats}[tab] || home)(v);
+  ({home, week, calendar, habits, notes, archive, stats, cycle: window.cycleTab}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
