@@ -45,8 +45,18 @@ function normalizeState(data) {
 }
 
 function save() {
-  localStorage.setItem("softPlanner", JSON.stringify(state));
+  const userId = window.plannerCurrentUserId;
+  const key = userId ? "softPlanner:user:" + userId : "softPlanner";
+  localStorage.setItem(key, JSON.stringify(state));
+  if (userId && typeof window.plannerCloudSave === "function") window.plannerCloudSave(state);
 }
+
+window.addEventListener("planner-cloud-load", event => {
+  state = normalizeState(event.detail || {});
+  save();
+  quote();
+  render();
+});
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
@@ -414,7 +424,7 @@ $("#editDialog")?.addEventListener("close", () => {
 $("#quoteBtn")?.addEventListener("click", quote);
 
 function init() {
-  const saved = localStorage.getItem("softPlanner");
+  const saved = localStorage.getItem(window.plannerCurrentUserId ? "softPlanner:user:" + window.plannerCurrentUserId : "softPlanner");
   if (saved) {
     try {
       state = normalizeState(JSON.parse(saved));
