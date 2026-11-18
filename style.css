@@ -251,3 +251,15 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 #tabs button[hidden]{display:none!important}
 @media(max-width:430px){#tabs{gap:2px}#tabs button{padding-left:0;padding-right:0}}
 @media(prefers-reduced-motion:reduce){#tabs,#tabs button{transition:none}}
+
+
+/* Графики и навигация по сохранённым дням цикла */
+.cycle-date{font:inherit;cursor:pointer;padding:0}
+.cycle-date:focus-visible,.cycle-chart-bar:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cycle-history-charts{margin-top:12px}
+.cycle-chart{padding:12px 0;border-top:1px solid var(--line)}
+.cycle-chart>b{display:block;font-size:13px;margin-bottom:9px}
+.cycle-chart-bars{display:flex;align-items:flex-end;gap:5px;min-height:112px;overflow-x:auto;padding:4px 2px 0}
+.cycle-chart-bar{flex:0 0 34px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;border:0;background:transparent;padding:0 2px;color:var(--muted);cursor:pointer}
+.cycle-chart-bar i{display:block;width:22px;min-height:5px;border-radius:7px 7px 3px 3px;background:var(--accent);opacity:.82}
+.cycle-chart-bar small{font-size:9px;white-space:nowrap}
