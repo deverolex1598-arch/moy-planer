@@ -19,25 +19,27 @@
   };
   const loadUserData = async user => {
     ready = false;
+    await (window.plannerAppReady || Promise.resolve());
     const { data, error } = await client.from(TABLE).select("data").eq("user_id", user.id).maybeSingle();
     if (error) { status("Не удалось загрузить личные данные: " + error.message, true); return; }
     if (data?.data && typeof data.data === "object") {
       window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: data.data }));
       status("Твои личные записи загружены и защищены аккаунтом.");
     } else {
+      const cached = localStorage.getItem("softPlanner:user:" + user.id);
       const guest = localStorage.getItem("softPlanner");
       let initial = {};
-      if (guest && window.confirm("В аккаунте пока нет записей. Перенести в него твои текущие привычки, задачи и заметки? Нажми «Отмена», чтобы начать с пустого планера.")) {
+      if (cached) {
+        try { initial = JSON.parse(cached) || {}; } catch (_) { initial = {}; }
+      } else if (guest && window.confirm("В аккаунте пока нет записей. Перенести в него твои текущие привычки, задачи и заметки? Нажми «Отмена», чтобы начать с пустого планера.")) {
         try { initial = JSON.parse(guest) || {}; } catch (_) { initial = {}; }
       }
       window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: initial }));
-      status(Object.keys(initial).length ? "Переносим твои записи в личный аккаунт…" : "Готово! Это твой новый личный планер.");
+      status(Object.keys(initial).length ? "Подготавливаю твои записи для личного аккаунта…" : "Готово! Это твой новый личный планер.");
     }
     ready = true;
     const current = JSON.parse(localStorage.getItem("softPlanner:user:" + user.id) || "null");
-    if (!data?.data && current && Object.keys(current).length) {
-      window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: current }));
-    }
+    if (current) window.plannerCloudSave(current);
   };
   window.plannerCloudSave = state => {
     if (!client || !ready || !window.plannerCurrentUserId) return;
