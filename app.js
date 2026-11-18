@@ -41,9 +41,9 @@ function normalizeState(data) {
   s.calendarEntries = Array.isArray(s.calendarEntries) ? s.calendarEntries : [];
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
-  s.theme = s.theme || "pink";
+  s.theme = s.theme || "lavender";
   s.hiddenTabs = Array.isArray(s.hiddenTabs) ? s.hiddenTabs.filter(x => ["week","cycle","diary","calendar"].includes(x)) : [];
-  if (!s.themeStyleV2) { s.theme = "brown"; s.themeStyleV2 = true; }
+  if (!s.themeStyleV2) { s.theme = "lavender"; s.themeStyleV2 = true; }
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
   s.goals = Array.isArray(s.goals) ? s.goals : [];
@@ -96,6 +96,15 @@ function quote() {
 
 function applyTheme() {
   document.body.className = state.theme === "pink" ? "" : "theme-" + state.theme;
+  const styles = getComputedStyle(document.body);
+  const bg = styles.getPropertyValue("--bg").trim() || "#f8f7fd";
+  const accent = styles.getPropertyValue("--accent").trim() || "#9994c9";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="${bg}"/><rect x="112" y="82" width="288" height="348" rx="34" fill="${accent}"/><rect x="136" y="106" width="240" height="300" rx="22" fill="#fff"/><path d="M176 154h160M176 190h160M176 226h72" stroke="${bg}" stroke-width="13" stroke-linecap="round"/><path d="M256 333c-14-12-55-38-55-69 0-32 39-42 55-13 16-29 55-19 55 13 0 31-41 57-55 69Z" fill="${accent}"/></svg>`;
+  let favicon = document.querySelector('link[rel="icon"]');
+  if (!favicon) { favicon = document.createElement("link"); favicon.rel = "icon"; document.head.appendChild(favicon); }
+  favicon.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.content = bg;
 }
 
 function dayTasks(day) {
