@@ -35,6 +35,10 @@ function normalizeState(data) {
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
   s.theme = s.theme || "pink";
+  if (s.theme === "dark") s.theme = "brown";
+  s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
+  s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
+  s.goals = Array.isArray(s.goals) ? s.goals : [];
   s.reminder = s.reminder || "20:00";
   s.reminderEnabled = Boolean(s.reminderEnabled);
   s.dailyHabits.forEach(h => {
@@ -91,7 +95,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, habits, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
+  ({home, week, habits, care, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -117,6 +121,25 @@ function home(v) {
 }
 
 
+const SELF_CARE_ITEMS = ["Выпить достаточно воды","Немного подвигаться","Выйти на свежий воздух","Сделать паузу и отдохнуть","Уход за собой","Лечь спать вовремя"];
+function care(v) {
+  const day = dateKey(today), mood = state.moods[day] || {}, done = state.selfCareLog[day] || [];
+  const notes = state.notes.filter(n => !n.archived).slice(0,8);
+  const goals = state.goals || [];
+  v.innerHTML = section("Забота о себе","Маленькое внимание к себе каждый день") +
+    `<div class="card care-card"><div class="row between"><h3>Как ты сегодня?</h3><span class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</span></div>
+    <form id="moodForm"><label>Моё настроение<select name="mood"><option value="">Выбери настроение</option>${["Спокойное","Радостное","Вдохновлённое","Усталое","Грустное","Тревожное","Раздражённое"].map(x=>`<option ${mood.mood===x?"selected":""}>${x}</option>`).join("")}</select></label>
+    <label>Пара слов о дне<textarea name="note" rows="2" placeholder="Что хочется запомнить?">${escapeHtml(mood.note||"")}</textarea></label><button class="primary">Сохранить настроение</button></form></div>
+    <div class="card care-card"><div class="row between"><h3>Мягкая забота</h3><span class="pill">${done.length}/${SELF_CARE_ITEMS.length}</span></div>
+    <div class="progress"><i style="width:${Math.round(done.length/SELF_CARE_ITEMS.length*100)}%"></i></div>
+    ${SELF_CARE_ITEMS.map((x,i)=>`<label class="care-check"><input type="checkbox" data-care-item="${i}" ${done.includes(i)?"checked":""}> <span>${x}</span></label>`).join("")}</div>
+    <div class="card care-card"><div class="row between"><h3>Мои цели</h3><span class="muted">${goals.filter(x=>x.done).length}/${goals.length}</span></div>
+    <form id="goalForm" class="inputrow"><input name="title" maxlength="120" placeholder="Маленький шаг к цели…" required><button class="primary">＋</button></form>
+    ${goals.map(g=>`<div class="item ${g.done?"done":""}"><button class="check ${g.done?"on":""}" data-goal-toggle="${g.id}">${g.done?"✓":""}</button><span class="itemtext">${escapeHtml(g.title)}</span><button class="mini" data-goal-delete="${g.id}">×</button></div>`).join("")||'<div class="empty">Большие цели начинаются с маленьких шагов.</div>'}</div>
+    <div class="card care-card"><div class="row between"><h3>Мои заметки</h3><button class="mini" data-add="note" data-add-day="${(today.getDay()+6)%7}">＋ Записать</button></div>
+    ${notes.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("")||'<div class="empty">Сохраняй здесь мысли, идеи и важные моменты.</div>'}</div>
+    <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button><button class="ghost" data-go="archive">▣ Архив задач</button></div>`;
+}
 function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
     `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
@@ -236,6 +259,9 @@ function handleAdd(type,day = selectedDay) {
 document.addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
+
+  if (b.dataset.goalToggle) { const g=byId(state.goals,b.dataset.goalToggle); if(g){g.done=!g.done;save();render();} return; }
+  if (b.dataset.goalDelete) { state.goals=state.goals.filter(x=>String(x.id)!==b.dataset.goalDelete); save(); render(); return; }
 
   if (b.dataset.tab) {
     tab = b.dataset.tab;
@@ -358,6 +384,25 @@ document.addEventListener("click", e => {
   }
 });
 
+document.addEventListener("change", e => {
+  if (e.target.matches("[data-care-item]")) {
+    const day=dateKey(today), idx=Number(e.target.dataset.careItem);
+    state.selfCareLog[day]=Array.isArray(state.selfCareLog[day])?state.selfCareLog[day]:[];
+    const list=state.selfCareLog[day];
+    state.selfCareLog[day]=e.target.checked?[...new Set([...list,idx])]:list.filter(x=>x!==idx);
+    save(); render();
+  }
+});
+document.addEventListener("submit", e => {
+  if (e.target.id === "moodForm") {
+    e.preventDefault(); const f=new FormData(e.target);
+    state.moods[dateKey(today)]={mood:f.get("mood"),note:f.get("note")}; save(); render(); return;
+  }
+  if (e.target.id === "goalForm") {
+    e.preventDefault(); const f=new FormData(e.target),title=String(f.get("title")||"").trim();
+    if(title){state.goals.push({id:newId(),title,done:false});save();render();} return;
+  }
+});
 document.addEventListener("submit", e => {
   if (e.target.id !== "editForm") return;
   e.preventDefault();
