@@ -31,6 +31,11 @@ function normalizeState(data) {
   s.tasks = Array.isArray(s.tasks) ? s.tasks : [];
   s.dailyHabits = Array.isArray(s.dailyHabits) ? s.dailyHabits : [];
   s.weeklyHabits = Array.isArray(s.weeklyHabits) ? s.weeklyHabits : [];
+  const currentWeek = dateKey(monday(new Date()));
+  s.weeklyHabits.forEach(h => {
+    if (!h.doneWeeks || typeof h.doneWeeks !== "object" || Array.isArray(h.doneWeeks)) h.doneWeeks = {};
+    if (h.done === true && h.doneWeeks[currentWeek] === undefined) h.doneWeeks[currentWeek] = true;
+  });
   s.notes = Array.isArray(s.notes) ? s.notes : [];
   s.diaryEntries = Array.isArray(s.diaryEntries) ? s.diaryEntries : [];
   s.calendarEntries = Array.isArray(s.calendarEntries) ? s.calendarEntries : [];
@@ -96,6 +101,16 @@ function applyTheme() {
 function dayTasks(day) {
   return state.tasks.filter(t => t.day === day && !t.archived);
 }
+function weekKey(offset = 0) {
+  const d = new Date(weekStart);
+  d.setDate(d.getDate() + offset * 7);
+  return dateKey(d);
+}
+function weeklyDone(h, key) { return Boolean(h.doneWeeks && h.doneWeeks[key]); }
+function weeklyHabitRow(h, key) {
+  const done = weeklyDone(h, key);
+  return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">Изменить</button></div>`;
+}
 
 function pct(done,total) {
   return total ? Math.round(done / total * 100) : 0;
@@ -130,12 +145,12 @@ function progress(n) {
 
 function home(v) {
  const td=(today.getDay()+6)%7, h=state.dailyHabits.filter(x=>x.done[td]).length, total=state.dailyHabits.length;
- const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), wh=state.weeklyHabits||[];
+ const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), wh=state.weeklyHabits||[], homeWeekKey=weekKey(0);
  v.innerHTML=section("Главная","Твоё уютное пространство ♡")+
  `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки сегодня</div><div class="big">${h} из ${total}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
  <div class="card"><div class="row between"><h3>♡ Мои привычки на сегодня</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x=>habitRow(x,td)).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
  <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini" data-go="habits">Изменить</button></div>
- ${wh.map(x=>`<div class="item"><span class="itemtext">${escapeHtml(x.name)}</span><button class="mini" data-edit-weekly-habit="${x.id}">Изменить</button><button class="mini" data-delete-weekly-habit="${x.id}">Удалить</button></div>`).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
+ ${wh.map(x=>weeklyHabitRow(x,homeWeekKey)).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
  <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
  ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
@@ -202,10 +217,11 @@ function taskList(items) {
 
 function orderedDays(){return Array.from({length:7},(_,k)=>(selectedDay+k)%7);}
 function week(v){
- const order=orderedDays();
+ const order=orderedDays(), selectedWeekKey=weekKey(weekOffset), weekly=state.weeklyHabits||[];
  v.innerHTML=section("План недели","Все дни на виду — выбранный день всегда первым ♡")+
  `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
  <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
+ <div class="card"><div class="row between"><h3>✿ Дела на всю неделю</h3><span class="muted">${weekly.filter(x=>weeklyDone(x,selectedWeekKey)).length}/${weekly.length}</span></div>${weekly.map(x=>weeklyHabitRow(x,selectedWeekKey)).join("")||'<div class="empty">Добавь дело на всю неделю ♡</div>'}<button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  <div class="week-stack">${order.map(i=>{const items=dayTasks(i),done=items.filter(t=>t.done).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items)}<button class="mini" data-add="task" data-add-day="${i}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
 }
 
@@ -400,7 +416,16 @@ document.addEventListener("click", e => {
     return;
   }
 
-  if (b.dataset.weeklyHabit) { const h=byId(state.weeklyHabits,b.dataset.weeklyHabit); if(h){h.done=!h.done;save();render();} return; }
+  if (b.dataset.weeklyHabit) {
+    const h=byId(state.weeklyHabits,b.dataset.weeklyHabit);
+    if(h){
+      h.doneWeeks = h.doneWeeks && typeof h.doneWeeks === "object" ? h.doneWeeks : {};
+      const key = b.dataset.weekKey || weekKey(0);
+      h.doneWeeks[key] = !h.doneWeeks[key];
+      save();render();
+    }
+    return;
+  }
   if (b.dataset.editWeeklyHabit) { const h=byId(state.weeklyHabits,b.dataset.editWeeklyHabit); if(h)openEditor("weeklyHabit",h); return; }
   if (b.dataset.habit) {
     const h = byId(state.dailyHabits,b.dataset.habit);
