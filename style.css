@@ -6,3 +6,48 @@ body.theme-beige{--bg:#fbf7ef;--card:#fffdf8;--ink:#594d40;--muted:#9b8c79;--acc
 body.theme-green{--bg:#f5faf5;--card:#fff;--ink:#43594b;--muted:#82978a;--accent:#82a98d;--soft:#e5f0e7;--line:#dce9de}
 body.theme-lavender{--bg:#f8f7fd;--card:#fff;--ink:#4d4b67;--muted:#9290ad;--accent:#9994c9;--soft:#eeecfa;--line:#e3e0f3}
 body.theme-dark{--bg:#22232b;--card:#2e303a;--ink:#f1eaf0;--muted:#aaa2b2;--accent:#d49bb5;--soft:#443744;--line:#48414e;--good:#80a88b}
+.donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.donut {
+  --donut-value: 0%;
+  width: 150px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    var(--accent, #e9a4b8) var(--donut-value),
+    var(--surface, #f5e8ec) 0
+  );
+}
+
+.donut-center {
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--card, #fff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.donut-center strong {
+  font-size: 1.45rem;
+}
+
+.donut-center span {
+  font-size: 0.75rem;
+  color: var(--muted, #8b7b80);
+}
+
+.progress-charts .card {
+  min-width: 0;
+}
