@@ -141,8 +141,8 @@ function care(v) {
     <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button><button class="ghost" data-go="archive">▣ Архив задач</button></div>`;
 }
 function settingsView(v) {
-  const themes = ["brown","beige","green","lavender"];
-  const labels = ["Шоколадная","Бежевая","Зелёная","Лавандовая"];
+  const themes = ["pink","peach","blue","beige","green","lavender","brown","dark"];
+  const labels = ["Розовая","Персиковая","Голубая","Бежевая","Шалфейная","Лавандовая","Шоколадная","Ночная"];
   const weekly = state.weeklyHabits || [];
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
