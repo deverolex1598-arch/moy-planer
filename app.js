@@ -81,7 +81,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, habits, notes, archive, stats}[tab] || home)(v);
+  ({home, week, calendar, habits, notes, archive, stats}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -93,22 +93,19 @@ function progress(n) {
 }
 
 function home(v) {
-  const h = state.dailyHabits.reduce((n,x) => n + (x.done[selectedDay] ? 1 : 0), 0);
-  const total = state.dailyHabits.length;
-  const todayNotes = state.notes.filter(n => Number(n.day ?? selectedDay) === selectedDay && !n.archived);
-  const weekTasks = DAYS.map((day,i) => {
-    const items = dayTasks(i);
-    return `<div class="week-task-day"><div class="row between"><b>${day}</b><button class="mini" data-day="${i}">${i===selectedDay?"Выбран":"Выбрать"}</button></div>${taskList(items)}</div>`;
-  }).join("");
-  v.innerHTML = section("Главная","Твой день — в твоём ритме") +
-    `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки за сегодня</div><div class="big">${h} из ${total}</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
-    <div class="card"><div class="row between"><h3>Привычки на сегодня · ${DAYS[selectedDay]}</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x => habitRow(x,selectedDay)).join("") || '<div class="empty">Добавь первую привычку ♡</div>'}</div>
-    <div class="card"><div class="row between"><h3>Задачи на неделю</h3><button class="mini" data-go="week">Открыть неделю</button></div><div class="home-week">${weekTasks}</div><button class="primary" data-add="task" data-add-day="${selectedDay}">＋ Добавить задачу</button></div>
-    <div class="card"><div class="row between"><h3>Выбранный день</h3><span class="muted">${FULL[selectedDay]}</span></div>${dayPicker()}</div>
-    <div class="card"><div class="row between"><div><h3>Заметки на выбранный день</h3><div class="muted">${FULL[selectedDay]}</div></div><button class="mini" data-add="note">＋ Заметка</button></div>
-    ${todayNotes.map(n => `<div class="note-preview"><b>${escapeHtml(n.title || "Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("") || '<div class="empty">На этот день заметок пока нет ♡</div>'}</div>
-    <div class="quick-add"><button class="primary" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button><button class="ghost" data-add="note">＋ Заметка</button></div>`;
+ const td=(today.getDay()+6)%7, h=state.dailyHabits.filter(x=>x.done[td]).length, total=state.dailyHabits.length;
+ const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), wh=state.weeklyHabits||[];
+ v.innerHTML=section("Главная","Твоё уютное пространство ♡")+
+ `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки сегодня</div><div class="big">${h} из ${total}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
+ <div class="card"><div class="row between"><h3>♡ Мои привычки на сегодня</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x=>habitRow(x,td)).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
+ <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini" data-go="habits">Изменить</button></div>
+ ${wh.map(x=>`<div class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-weekly-habit="${x.id}">${x.done?"✓":""}</button><span class="itemtext">${escapeHtml(x.name)}</span><button class="mini" data-edit-weekly-habit="${x.id}">✎</button></div>`).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
+ <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
+ <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
+ ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
+ <div class="quick-add"><button class="ghost" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button></div>`;
 }
+
 function dayPicker() {
   return `<div class="daygrid">${DAYS.map
 
@@ -128,15 +125,26 @@ function taskList(items) {
   ).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
 }
 
-function week(v) {
-  const d = dateFor(selectedDay);
-  const tasks = dayTasks(selectedDay);
-  const completed = tasks.filter(t => t.done).length;
-  v.innerHTML = section("План недели","Выбери день, чтобы увидеть только его задачи") +
-    `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
-    <div class="card"><h3>Выбери день</h3>${dayPicker()}</div>
-    <div class="card"><div class="row between"><div><h3>${FULL[selectedDay]}, ${d.getDate()} ${d.toLocaleDateString("ru-RU",{month:"long"})}</h3><div class="muted">${completed} из ${tasks.length} задач выполнено</div></div><button class="primary" data-add="task" data-add-day="${selectedDay}">＋ Добавить</button></div>${taskList(tasks)}</div>`;
-}function habits(v) {
+function orderedDays(){return Array.from({length:7},(_,k)=>(selectedDay+k)%7);}
+function week(v){
+ const order=orderedDays();
+ v.innerHTML=section("План недели","Все дни на виду — выбранный день всегда первым ♡")+
+ `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
+ <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
+ <div class="week-stack">${order.map(i=>{const items=dayTasks(i),done=items.filter(t=>t.done).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items)}<button class="mini" data-add="task" data-add-day="${i}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
+}
+function calendar(v){
+ const items=dayTasks(selectedDay),td=(today.getDay()+6)%7,ns=state.notes.filter(n=>Number(n.day??selectedDay)===selectedDay&&!n.archived),wh=state.weeklyHabits||[];
+ v.innerHTML=section("Календарь","Нажми на день, чтобы посмотреть всё самое важное")+
+ `<div class="card"><div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>${dayPicker()}</div>
+ <div class="card"><div class="row between"><div><h3>♡ ${FULL[selectedDay]}</h3><div class="muted">${dateFor(selectedDay).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><span class="pill">${selectedDay===td?"Сегодня":"Выбранный день"}</span></div>
+ <h3>Планы</h3>${taskList(items)}<h3>Привычки</h3>${state.dailyHabits.map(h=>habitRow(h,selectedDay)).join("")||'<div class="empty">Нет привычек</div>'}
+ <h3>Дела на неделю</h3>${wh.map(x=>`<div class="item"><span class="itemtext">${escapeHtml(x.name)}</span><span class="pill">${x.done?"Выполнено":"В планах"}</span></div>`).join("")||'<div class="empty">Нет недельных дел</div>'}
+ <h3>Заметки</h3>${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p></div>`).join("")||'<div class="empty">Заметок пока нет</div>'}
+ <button class="primary" data-add="task" data-add-day="${selectedDay}">＋ Добавить план</button></div>`;
+}
+
+function habits(v) {
   v.innerHTML = section("Мои привычки","Формируй полезные привычки маленькими шагами") +
     `<div class="card"><div class="row between"><h3>Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
     ${state.dailyHabits.map(h => `<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("") || `<div class="empty">Добавь первую привычку ♡</div>`}</div>
@@ -171,12 +179,13 @@ function stats(v) {
 }
 
 function openEditor(type,item = {}) {
-  editing = {type,id:item.id};
+  editing = {type,id:item.id,day:item.day};
   const form = $("#editForm");
   form.innerHTML = "";
   const fields = {
     task: `<label>Название задачи<input name="title" required value="${escapeHtml(item.title || "")}"></label><label>День<select name="day">${DAYS.map((d,i) => `<option value="${i}" ${Number(item.day ?? selectedDay)===i?"selected":""}>${d}</option>`).join("")}</select></label>`,
     habit: `<label>Название привычки<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
+    weeklyHabit: `<label>Дело на неделю<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
     note: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Текст<textarea name="text" rows="5">${escapeHtml(item.text || "")}</textarea></label>`
   };
   form.innerHTML = (fields[type] || "") + `<div class="form-actions"><button type="button" class="ghost" id="cancelEdit">Отмена</button><button type="submit" class="primary" id="saveEdit">Сохранить</button></div>`;
@@ -200,7 +209,8 @@ function newId() {
 function handleAdd(type,day = selectedDay) {
   if (type === "task") openEditor("task",{day});
   else if (type === "habit") openEditor("habit");
-  else if (type === "note") openEditor("note");
+  else if (type === "weeklyHabit") openEditor("weeklyHabit");
+  else if (type === "note") openEditor("note",{day});
 }
 
 
@@ -242,6 +252,8 @@ document.addEventListener("click", e => {
     return;
   }
 
+  if (b.dataset.weeklyHabit) { const h=byId(state.weeklyHabits,b.dataset.weeklyHabit); if(h){h.done=!h.done;save();render();} return; }
+  if (b.dataset.editWeeklyHabit) { const h=byId(state.weeklyHabits,b.dataset.editWeeklyHabit); if(h)openEditor("weeklyHabit",h); return; }
   if (b.dataset.habit) {
     const h = byId(state.dailyHabits,b.dataset.habit);
     const day = Number(b.dataset.day ?? selectedDay);
@@ -353,6 +365,12 @@ document.addEventListener("submit", e => {
     }
   }
 
+  if (type === "weeklyHabit") {
+    state.weeklyHabits=Array.isArray(state.weeklyHabits)?state.weeklyHabits:[];
+    if(id){const h=byId(state.weeklyHabits,id);if(h)h.name=values.name;}
+    else state.weeklyHabits.push({id:newId(),name:values.name,done:false,frequency:"weekly"});
+  }
+
   if (type === "habit") {
     if (id) {
       const h = byId(state.dailyHabits,id);
@@ -375,7 +393,7 @@ document.addEventListener("submit", e => {
         id:newId(),
         title:values.title,
         text:values.text,
-        day:selectedDay, createdAt:new Date().toISOString()
+        day:Number(editing.day ?? selectedDay), createdAt:new Date().toISOString()
       });
     }
   }
