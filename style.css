@@ -239,3 +239,7 @@ body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9c
 
 /* Пять основных разделов в нижней навигации */
 nav{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+#tabs{grid-template-columns:repeat(var(--visible-tabs,5),minmax(0,1fr));transition:grid-template-columns .28s ease;}
+#tabs button[hidden]{display:none!important;}
+@media(prefers-reduced-motion:reduce){#tabs{transition:none}}
