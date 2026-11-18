@@ -216,3 +216,23 @@ body.theme-blue .day.selected{background:#dcecf7;border-color:#79a9cb;color:#456
 body.theme-blue .progress i{background:#79a9cb}
 body.theme-blue .cycle-date.actual{background:#79a9cb;border-color:#79a9cb;color:white}
 body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9cb;color:#456f8d}
+
+/* Полноценный месячный календарь */
+.month-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.month-head b{text-transform:capitalize;font-size:16px}
+.month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.weekday-labels{margin-bottom:6px}
+.weekday-labels span{text-align:center;color:var(--muted);font-size:11px;padding:5px 0}
+.month-day{min-width:0;min-height:43px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:inherit;font-size:13px;padding:5px 2px}
+.month-day.empty-day{border:0;background:transparent}
+.month-day.today{outline:2px solid var(--accent);outline-offset:1px}
+.month-day.selected{background:var(--soft);border-color:var(--accent);font-weight:800}
+.month-day i,.month-legend i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block}
+.month-day i.task-dot,.month-legend i.task-dot{background:var(--good)}
+.month-legend{display:flex;gap:16px;justify-content:center;margin-top:13px;color:var(--muted);font-size:11px}
+.month-legend span{display:flex;align-items:center;gap:6px}
+.calendar-entry{padding:12px 0;border-top:1px solid var(--line)}
+.calendar-entry>strong{display:block;margin-top:7px}
+.calendar-entry p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--muted);margin:6px 0}
+.calendar-entry.is-done>strong{text-decoration:line-through;opacity:.6}
+@media(max-width:390px){.month-grid{gap:3px}.month-day{min-height:39px;border-radius:9px}}
