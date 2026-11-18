@@ -89,12 +89,18 @@ function escapeHtml(s) {
 
 let quoteBank = [];
 
+function cleanQuoteText(value) {
+  return String(value ?? "")
+    .replace(/^\\s*(?:(?:мудрая\\s+мысль|мысль\\s+дня|цитата(?:\\s+дня)?|путь\\s+к\\s+мечте|мотивация|любовь\\s+к\\s+себе|вдохновение|напоминание\\s+себе)[^:\\n]{0,80}:\\s*)/i, "")
+    .trim();
+}
+
 function quote() {
   const savedQuotes = Array.isArray(state?.quotes) ? state.quotes : [];
   const quotes = quoteBank.length ? quoteBank : savedQuotes;
-  const q = quotes.length ? quotes[Math.floor(Math.random() * quotes.length)] : "";
+  const q = quotes.length ? cleanQuoteText(quotes[Math.floor(Math.random() * quotes.length)]) : "";
   const box = $("#quoteBox");
-  if (box) box.textContent = q || "Маленькие шаги тоже важны ♡";
+  if (box) box.innerHTML = '<span class="quote-text">' + escapeHtml(q || "Маленькие шаги тоже важны ♡") + '</span><button class="quote-copy" type="button" aria-label="Скопировать цитату" title="Скопировать цитату">Копировать</button>';
 }
 
 function applyTheme() {
@@ -635,6 +641,32 @@ $("#editDialog")?.addEventListener("close", () => {
 });
 
 $("#quoteBtn")?.addEventListener("click", quote);
+
+$("#quoteBox")?.addEventListener("click", async event => {
+  const button = event.target.closest(".quote-copy");
+  if (!button) return;
+  const text = $("#quoteBox .quote-text")?.textContent || "";
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      const copied = document.execCommand("copy");
+      field.remove();
+      if (!copied) throw new Error("Copy command was unavailable");
+    }
+    button.textContent = "Скопировано ♡";
+    button.setAttribute("aria-label", "Цитата скопирована");
+  } catch (error) {
+    button.textContent = "Не удалось";
+    console.warn("Quote copy failed", error);
+  }
+});
 
 function init() {
   let saved = null;
