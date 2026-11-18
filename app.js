@@ -87,8 +87,11 @@ function escapeHtml(s) {
   }[c]));
 }
 
+let quoteBank = [];
+
 function quote() {
-  const quotes = Array.isArray(state?.quotes) ? state.quotes : [];
+  const savedQuotes = Array.isArray(state?.quotes) ? state.quotes : [];
+  const quotes = quoteBank.length ? quoteBank : savedQuotes;
   const q = quotes.length ? quotes[Math.floor(Math.random() * quotes.length)] : "";
   const box = $("#quoteBox");
   if (box) box.textContent = q || "Маленькие шаги тоже важны ♡";
@@ -678,3 +681,16 @@ $("#settingsBtn")?.addEventListener("click", () => {
 
 
 window.plannerAppReady = init();
+
+fetch("quotes.json", { cache: "force-cache" })
+  .then(response => {
+    if (!response.ok) throw new Error("Не удалось загрузить цитаты");
+    return response.json();
+  })
+  .then(data => {
+    if (Array.isArray(data)) {
+      quoteBank = data;
+      quote();
+    }
+  })
+  .catch(error => console.warn("Quote library could not be loaded", error));
