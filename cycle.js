@@ -52,7 +52,7 @@ function cycleTab(v){
  if(!selectedCycleId||!ordered.some(x=>x.id===selectedCycleId))selectedCycleId=ordered.length?ordered[ordered.length-1].id:"";
  const selected=ordered.find(x=>x.id===selectedCycleId);
  const nextPeriod=selected?ordered.find(x=>x.start>selected.start):null;
- const cycleEnd=selected?(selected.end|| (nextPeriod?plus(nextPeriod.start,-1):today)):today;
+ const cycleEnd=selected?(nextPeriod?plus(nextPeriod.start,-1):today):today;
  const historyCharts=selected?cycleCharts(c,selected,cycleEnd):"";
  v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+monthCalendar(c)+
  '<div class="card cycle-card"><h3>Следующая менструация</h3><div class="cycle-forecast"><strong>'+(next?esc(date(next).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})):"Пока нет прогноза")+'</strong><span>Приблизительная дата, не медицинское заключение</span></div><label>Исправить прогноз<input id="cycleForecast" type="date" value="'+esc(next)+'"></label><button class="ghost" data-cycle-forecast>Сохранить дату</button></div>'+
