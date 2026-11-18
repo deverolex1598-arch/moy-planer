@@ -355,7 +355,7 @@ document.addEventListener("click", e => {
     return;
   }
 
-  if (b.dataset.monthShift) { calendarMonthOffset += Number(b.dataset.monthShift); render(); return; }
+  if (b.dataset.monthShift) { calendarMonthOffset += Number(b.dataset.monthShift); const targetMonth=new Date(today.getFullYear(),today.getMonth()+calendarMonthOffset,1); selectedCalendarDate=dateKey(targetMonth); render(); return; }
   if (b.dataset.calendarDate) { selectedCalendarDate=b.dataset.calendarDate; render(); return; }
   if (b.dataset.addCalendar) { selectedCalendarDate=b.dataset.addCalendar; openEditor("calendarEntry",{date:selectedCalendarDate}); return; }
   if (b.dataset.calendarDone) { const x=byId(state.calendarEntries,b.dataset.calendarDone); if(x){x.done=!x.done;save();render();} return; }
