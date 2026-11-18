@@ -95,11 +95,11 @@ function render() {
     weekday:"long", day:"numeric", month:"long", year:"numeric"
   });
   const hiddenTabs = state.hiddenTabs || [];
+  if (hiddenTabs.includes(tab)) tab = "home";
   $("#tabs button").forEach(b => {
     b.hidden = hiddenTabs.includes(b.dataset.tab);
     b.classList.toggle("active", b.dataset.tab === tab);
   });
-  if (hiddenTabs.includes(tab)) tab = "home";
   let v = $("#view");
   ({home, week, settings: settingsView, cycle: window.cycleTab}[tab] || home)(v);
 }
@@ -279,6 +279,27 @@ function handleAdd(type,day = selectedDay) {
 document.addEventListener("click", e => {
   const b = e.target.closest("button");
   if (!b) return;
+
+  // Все динамические элементы меню обрабатываются одним делегированным обработчиком.
+  if (b.dataset.toggleTab) {
+    const id = b.dataset.toggleTab;
+    state.hiddenTabs = Array.isArray(state.hiddenTabs) ? state.hiddenTabs : [];
+    state.hiddenTabs = state.hiddenTabs.includes(id)
+      ? state.hiddenTabs.filter(x => x !== id)
+      : [...state.hiddenTabs, id];
+    if (state.hiddenTabs.includes(tab)) tab = "home";
+    save();
+    render();
+    return;
+  }
+
+  if (b.dataset.theme) {
+    state.theme = b.dataset.theme;
+    save();
+    applyTheme();
+    $("#view").querySelectorAll("[data-theme]").forEach(x => x.classList.toggle("active", x.dataset.theme === state.theme));
+    return;
+  }
 
   if (b.dataset.goalToggle) { const g=byId(state.goals,b.dataset.goalToggle); if(g){g.done=!g.done;save();render();} return; }
   if (b.dataset.goalDelete) { state.goals=state.goals.filter(x=>String(x.id)!==b.dataset.goalDelete); save(); render(); return; }
@@ -527,27 +548,5 @@ $("#settingsBtn")?.addEventListener("click", () => {
   render();
 });
 
-document.addEventListener("click", e => {
-  const menuButton = e.target.closest("[data-toggle-tab]");
-  if (menuButton) {
-    const id = menuButton.dataset.toggleTab;
-    state.hiddenTabs = state.hiddenTabs || [];
-    state.hiddenTabs = state.hiddenTabs.includes(id)
-      ? state.hiddenTabs.filter(x => x !== id)
-      : [...state.hiddenTabs, id];
-    save();
-    render();
-    return;
-  }
-});
-
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-theme]");
-  if (!b) return;
-  state.theme = b.dataset.theme;
-  save();
-  applyTheme();
-  $("#view").querySelectorAll("[data-theme]").forEach(x => x.classList.toggle("active",x.dataset.theme === state.theme));
-});
 
 window.plannerAppReady = init();
