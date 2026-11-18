@@ -35,7 +35,7 @@ function normalizeState(data) {
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
   s.theme = s.theme || "pink";
-  if (s.theme === "dark") s.theme = "brown";
+  if (!s.themeStyleV2) { s.theme = "brown"; s.themeStyleV2 = true; }
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
   s.goals = Array.isArray(s.goals) ? s.goals : [];
