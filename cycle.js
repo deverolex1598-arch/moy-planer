@@ -30,7 +30,7 @@ function monthCalendar(c){
 function cycleTab(v){
  const c=cdata(),p=c.periods.slice().sort((a,b)=>b.start.localeCompare(a.start)),next=prediction(c),a=avg(intervals(c)),day=window.cycleLogDay||today,log=c.logs[day]||{};
  const symptoms=[...new Set(["Спазмы","Головная боль","Вздутие","Акне","Чувствительность груди","Тошнота","Усталость",...c.customSymptoms])];
- v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+
+ v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+monthCalendar(c)+
  '<div class="card cycle-card"><h3>Следующая менструация</h3><div class="cycle-forecast"><strong>'+(next?esc(date(next).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})):"Пока нет прогноза")+'</strong><span>Приблизительная дата, не медицинское заключение</span></div><label>Исправить прогноз<input id="cycleForecast" type="date" value="'+esc(next)+'"></label><button class="ghost" data-cycle-forecast>Сохранить дату</button></div>'+
  '<div class="card cycle-card"><h3>История цикла</h3><form id="periodForm" class="cycle-form"><label>Первый день<input name="start" type="date" required></label><label>Последний день<input name="end" type="date"></label><button class="primary">＋ Сохранить даты</button></form><div class="cycle-stats"><div><b>'+(a?a+" дн.":"—")+'</b><span>средняя длина цикла</span></div><div><b>'+p.length+'</b><span>записей в истории</span></div></div>'+
  (p.length?'<h3>Прошлые циклы</h3>'+p.map(x=>'<div class="item"><span class="itemtext">'+esc(x.start)+'<small>'+(x.end?' — '+esc(x.end):'')+'</small></span><button class="mini" data-period-edit="'+esc(x.id)+'">Изменить</button><button class="mini" data-period-delete="'+esc(x.id)+'">×</button></div>').join(""):'<div class="empty">Здесь появится история ♡</div>')+
@@ -46,6 +46,7 @@ document.addEventListener("submit",e=>{
  if(e.target.id==="cycleLogForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target);c.logs[window.cycleLogDay]={pain:f.get("pain"),bleeding:f.get("bleeding"),mood:f.get("mood"),energy:f.get("energy"),sleep:f.get("sleep"),appetite:f.get("appetite"),symptoms:f.getAll("symptoms"),medication:f.get("medication"),notes:f.get("notes")};save();cycleTab($("#view"));}
 });
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const c=cdata();
+ if(b.hasAttribute("data-cycle-month")){monthOffset+=Number(b.dataset.cycleMonth)||0;cycleTab($("#view"));return;}
  if(b.hasAttribute("data-cycle-forecast")){const v=$("#cycleForecast").value;if(v&&!validDate(v))return alert("Укажи корректную дату прогноза.");c.forecastOverride=v;save();cycleTab($("#view"));}
  if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){if(c.periods.some(x=>x.start===today))return alert("Сегодняшняя дата уже записана в истории.");c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
  if(b.hasAttribute("data-period-delete")&&confirm("Удалить запись из истории?")){c.periods=c.periods.filter(x=>x.id!==b.dataset.periodDelete);save();cycleTab($("#view"));}
