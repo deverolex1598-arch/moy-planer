@@ -5,6 +5,7 @@ const key=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffse
 const date=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
 const plus=(s,n)=>{const d=date(s);d.setDate(d.getDate()+n);return key(d)};
 const diff=(a,b)=>Math.round((date(b)-date(a))/86400000);
+const validDate=s=>/^\\d{4}-\\d{2}-\\d{2}$/.test(s)&&!Number.isNaN(date(s).getTime())&&key(date(s))===s;
 const today=key(new Date());
 const cdata=()=>{state.cycle=state.cycle||{periods:[],logs:{},customSymptoms:[],forecastOverride:""};let c=state.cycle;c.periods=Array.isArray(c.periods)?c.periods:[];c.logs=c.logs||{};c.customSymptoms=c.customSymptoms||[];return c};
 const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
@@ -26,14 +27,14 @@ function cycleTab(v){
 window.cycleTab=cycleTab;window.cycleLogDay=today;
 document.addEventListener("change",e=>{if(e.target.id==="cycleLogDate"){window.cycleLogDay=e.target.value;cycleTab(document.querySelector("#view"));}});
 document.addEventListener("submit",e=>{
- if(e.target.id==="periodForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target),start=f.get("start"),end=f.get("end");if(end&&end<start)return alert("Дата окончания раньше начала.");c.periods.push({id:Date.now().toString(36),start,end:end||""});c.forecastOverride="";save();cycleTab($("#view"));}
+ if(e.target.id==="periodForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target),start=f.get("start"),end=f.get("end");if(!validDate(start)|| (end&&!validDate(end)))return alert("Проверь дату начала и окончания.");if(end&&end<start)return alert("Дата окончания раньше начала.");if(c.periods.some(x=>x.start===start))return alert("Такая дата начала уже есть в истории.");c.periods.push({id:Date.now().toString(36),start,end:end||""});c.forecastOverride="";save();cycleTab($("#view"));}
  if(e.target.id==="cycleLogForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target);c.logs[window.cycleLogDay]={pain:f.get("pain"),bleeding:f.get("bleeding"),mood:f.get("mood"),energy:f.get("energy"),sleep:f.get("sleep"),appetite:f.get("appetite"),symptoms:f.getAll("symptoms"),medication:f.get("medication"),notes:f.get("notes")};save();cycleTab($("#view"));}
 });
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const c=cdata();
- if(b.hasAttribute("data-cycle-forecast")){c.forecastOverride=$("#cycleForecast").value;save();cycleTab($("#view"));}
- if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-cycle-forecast")){const v=$("#cycleForecast").value;if(v&&!validDate(v))return alert("Укажи корректную дату прогноза.");c.forecastOverride=v;save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){if(c.periods.some(x=>x.start===today))return alert("Сегодняшняя дата уже записана в истории.");c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
  if(b.hasAttribute("data-period-delete")&&confirm("Удалить запись из истории?")){c.periods=c.periods.filter(x=>x.id!==b.dataset.periodDelete);save();cycleTab($("#view"));}
- if(b.hasAttribute("data-period-edit")){const p=c.periods.find(x=>x.id===b.dataset.periodEdit);if(!p)return;const s=prompt("Дата начала (ГГГГ-ММ-ДД)",p.start);if(s===null)return;const end=prompt("Последний день (можно пусто)",p.end||"");if(end===null)return;if(end&&end<s)return alert("Дата окончания раньше начала.");p.start=s;p.end=end;c.forecastOverride="";save();cycleTab($("#view"));}
+ if(b.hasAttribute("data-period-edit")){const p=c.periods.find(x=>x.id===b.dataset.periodEdit);if(!p)return;const s=prompt("Дата начала (ГГГГ-ММ-ДД)",p.start);if(s===null)return;const end=prompt("Последний день (можно пусто)",p.end||"");if(end===null)return;if(!validDate(s)||(end&&!validDate(end)))return alert("Проверь формат дат: ГГГГ-ММ-ДД.");if(end&&end<s)return alert("Дата окончания раньше начала.");if(c.periods.some(x=>x.id!==p.id&&x.start===s))return alert("Такая дата начала уже есть в истории.");p.start=s;p.end=end;c.forecastOverride="";save();cycleTab($("#view"));}
  if(b.hasAttribute("data-cycle-add")){const i=$("#customSymptom"),s=i.value.trim();if(s&&!c.customSymptoms.includes(s)){c.customSymptoms.push(s);save();cycleTab($("#view"));}}
 });
 })();
