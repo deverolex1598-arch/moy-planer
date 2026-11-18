@@ -91,7 +91,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, calendar, habits, notes, archive, stats, cycle: window.cycleTab}[tab] || home)(v);
+  ({home, week, calendar, habits, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -116,7 +116,12 @@ function home(v) {
  <div class="quick-add"><button class="ghost" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button></div>`;
 }
 
-function dayPicker() {
+
+function more(v) {
+  v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
+    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
+}
+\nfunction dayPicker() {
   return `<div class="daygrid">${DAYS.map
 
 
