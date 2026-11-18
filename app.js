@@ -107,7 +107,7 @@ function render() {
   });
   const hiddenTabs = state.hiddenTabs || [];
   if (hiddenTabs.includes(tab)) tab = "home";
-  $("#tabs button").forEach(b => {
+  $$("#tabs button").forEach(b => {
     b.hidden = hiddenTabs.includes(b.dataset.tab);
     b.classList.toggle("active", b.dataset.tab === tab);
   });
