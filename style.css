@@ -240,17 +240,15 @@ body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9c
 /* Пять основных разделов в нижней навигации */
 nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 
-#tabs{grid-template-columns:repeat(var(--visible-tabs,5),minmax(0,1fr));transition:grid-template-columns .28s ease;}
+#tabs{grid-template-columns:repeat(var(--visible-tabs,5),minmax(0,1fr));}
 #tabs button[hidden]{display:none!important;}
-@media(prefers-reduced-motion:reduce){#tabs{transition:none}}
 
 /* Плавное схлопывание скрываемых вкладок на мобильных экранах */
-#tabs{display:flex;width:100%;gap:4px;transition:gap .26s ease}
-#tabs button{flex:1 1 0;min-width:0;width:auto;overflow:hidden;opacity:1;transform:scale(1);transition:flex .26s ease,opacity .22s ease,transform .22s ease,padding .26s ease,min-width .26s ease}
-#tabs button.is-hiding{flex:0 0 0;min-width:0;padding-left:0;padding-right:0;opacity:0;transform:scale(.82);pointer-events:none}
+#tabs{display:flex;width:100%;gap:4px;}
+#tabs button{flex:1 1 0;min-width:0;width:auto;overflow:hidden;opacity:1;transform:scale(1);}
+/* Навигация обновляется сразу, без задерживающей анимации скрытия */
 #tabs button[hidden]{display:none!important}
 @media(max-width:430px){#tabs{gap:2px}#tabs button{padding-left:0;padding-right:0}}
-@media(prefers-reduced-motion:reduce){#tabs,#tabs button{transition:none}}
 
 
 /* Графики и навигация по сохранённым дням цикла */
