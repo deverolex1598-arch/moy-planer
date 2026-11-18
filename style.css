@@ -105,3 +105,44 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 
 /* Monthly cycle calendar */
 .cycle-month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}.cycle-month-title{font-weight:800;color:var(--ink);text-transform:capitalize}.cycle-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.cycle-weekday{text-align:center;color:var(--muted);font-size:10px;padding:4px 0}.cycle-date{min-height:42px;border:1px solid var(--line);border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;font-size:12px;color:var(--ink)}.cycle-date.outside{opacity:.3}.cycle-date.today{outline:2px solid var(--accent);outline-offset:1px}.cycle-date.actual{background:#e9a0b3;border-color:#e9a0b3;color:white;font-weight:800}.cycle-date.forecast{background:#f9dce4;border:1px dashed #d9829a;color:#8e5365;font-weight:800}.cycle-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;color:var(--muted);font-size:11px}.cycle-legend span{display:flex;align-items:center;gap:5px}.cycle-dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#e9a0b3}.cycle-dot.forecast{background:#f9dce4;border:1px dashed #d9829a}
+
+
+/* Спокойная тёмная тема: графит, дымчатый шалфей и тёплый камень */
+body.theme-dark{
+ --bg:#292d2e;--card:#343a39;--ink:#e6e4dc;--muted:#a9ada5;
+ --accent:#a6aa91;--soft:#414844;--line:#515a54;--good:#8fa98e;
+ --shadow:0 8px 26px rgba(0,0,0,.20);
+ background:radial-gradient(ellipse at 12% 0%,#39413d 0,transparent 42%),var(--bg);
+}
+body.theme-dark h1,body.theme-dark h2,body.theme-dark h3{color:var(--ink)}
+body.theme-dark h1 span{color:#a6aa91}
+body.theme-dark .quote{background:linear-gradient(115deg,#3c4540,#41413a);color:#c3c4b5;border:1px solid var(--line);box-shadow:none}
+body.theme-dark .card{background:var(--card);border-color:var(--line);box-shadow:var(--shadow)}
+body.theme-dark .card:after{color:#899181;opacity:.22}
+body.theme-dark .item:last-child:after{color:#9ba28d}
+body.theme-dark .primary{background:#78836f;color:#fff;box-shadow:none}
+body.theme-dark .ghost,body.theme-dark .mini{background:#3a413d;border-color:var(--line);color:var(--ink)}
+body.theme-dark .round{background:#414943;color:#c5c7b5}
+body.theme-dark .check{background:#303634;border-color:#737d70}
+body.theme-dark .check.on{background:#788d78;border-color:#788d78}
+body.theme-dark .day,body.theme-dark .cycle-date{background:#303634;border-color:var(--line);color:var(--muted)}
+body.theme-dark .day strong{color:var(--ink)}
+body.theme-dark .day.selected{background:#465047;border-color:#8c987f;color:#d5d8c7}
+body.theme-dark .cycle-date.actual{background:#788d78;border-color:#788d78;color:#fff}
+body.theme-dark .cycle-date.forecast{background:#454b43;border:1px dashed #a6aa91;color:#e0dfd2}
+body.theme-dark .cycle-dot{background:#788d78}
+body.theme-dark .cycle-dot.forecast{background:#454b43;border:1px dashed #a6aa91}
+body.theme-dark .cycle-forecast,body.theme-dark .stat{background:#414943}
+body.theme-dark .cycle-forecast strong,body.theme-dark .cycle-stats b,body.theme-dark .big,.theme-dark .progress i{color:#c5c9b2}
+body.theme-dark .progress{background:#454d47}
+body.theme-dark .progress i{background:#87947b}
+body.theme-dark input,body.theme-dark textarea,body.theme-dark select{background:#303634;border-color:var(--line);color:var(--ink)}
+body.theme-dark nav{background:#343a39;border-color:var(--line)}
+body.theme-dark nav button.active{background:#465047;color:#d5d8c7;box-shadow:none}
+body.theme-dark .week-day-card.is-selected{background:#3c4540;border-color:#89927e}
+body.theme-dark .week-task-day{background:#303634;border-color:var(--line)}
+body.theme-dark .pill{background:#465047;color:#d5d8c7}
+body.theme-dark dialog{background:#343a39;color:var(--ink)}
+body.theme-dark dialog::backdrop{background:rgba(10,14,13,.72)}
+body.theme-dark .cycle-card fieldset{border-color:var(--line)}
+body.theme-dark .cycle-symptoms input{accent-color:#9ba58b}
