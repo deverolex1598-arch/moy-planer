@@ -433,24 +433,22 @@ function init() {
       state = normalizeState({});
     }
     render();
-  } else {
-    fetch("seed.json")
-
-
-.then(r => r.ok ? r.json() : {})
-      .then(data => {
-        state = normalizeState(data);
-        quote();
-        save();
-        render();
-      })
-      .catch(() => {
-        state = normalizeState({});
-        quote();
-        save();
-        render();
-      });
+    return Promise.resolve();
   }
+  return fetch("seed.json")
+    .then(r => r.ok ? r.json() : {})
+    .then(data => {
+      state = normalizeState(data);
+      quote();
+      save();
+      render();
+    })
+    .catch(() => {
+      state = normalizeState({});
+      quote();
+      save();
+      render();
+    });
 }
 
 $("#settingsBtn")?.addEventListener("click", () => {
@@ -470,4 +468,4 @@ document.addEventListener("click", e => {
   $("#view").querySelectorAll("[data-theme]").forEach(x => x.classList.toggle("active",x.dataset.theme === state.theme));
 });
 
-init();
+window.plannerAppReady = init();
