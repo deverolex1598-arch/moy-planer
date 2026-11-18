@@ -145,10 +145,13 @@ function calendar(v){
 }
 
 function habits(v) {
-  v.innerHTML = section("Мои привычки","Формируй полезные привычки маленькими шагами") +
-    `<div class="card"><div class="row between"><h3>Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h => `<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("") || `<div class="empty">Добавь первую привычку ♡</div>`}</div>
-    <div class="card"><h3>Отметки за неделю</h3>${state.dailyHabits.map(h => `<div class="habitweek"><b>${escapeHtml(h.name)}</b><div class="habitdays">${DAYS.map((d,i) => `<button class="check ${h.done[i]?"on":""}" data-habit="${h.id}" data-day="${i}">${h.done[i]?"✓":d[0]}</button>`).join("")}</div></div>`).join("")}</div>`;
+  const weekly=state.weeklyHabits||[];
+  v.innerHTML=section("Мои привычки","Ежедневные ритуалы и дела на всю неделю ♡")+
+    `<div class="card"><div class="row between"><h3>♡ Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
+    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
+    <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить</button></div>
+    ${weekly.map(h=>`<div class="item ${h.done?"done":""}"><button class="check ${h.done?"on":""}" data-weekly-habit="${h.id}">${h.done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
+    <div class="card"><h3>Отметки ежедневных привычек</h3>${state.dailyHabits.map(h=>`<div class="habitweek"><b>${escapeHtml(h.name)}</b><div class="habitdays">${DAYS.map((d,i)=>`<button class="check ${h.done[i]?"on":""}" data-habit="${h.id}" data-day="${i}">${h.done[i]?"✓":d[0]}</button>`).join("")}</div></div>`).join("")}</div>`;
 }
 
 function notes(v) {
@@ -304,6 +307,7 @@ document.addEventListener("click", e => {
     return;
   }
 
+  if (b.dataset.deleteWeeklyHabit) { state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==b.dataset.deleteWeeklyHabit); save(); render(); return; }
   if (b.dataset.deleteHabit) {
     state.dailyHabits = state.dailyHabits.filter(x => String(x.id) !== b.dataset.deleteHabit);
     save();
