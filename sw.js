@@ -1,4 +1,4 @@
-const CACHE='soft-planner-v4';
+const CACHE='soft-planner-v5';
 const FILES=['./','index.html','style.css','app.js','cycle.js','auth.js','seed.json','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('soft-planner-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
