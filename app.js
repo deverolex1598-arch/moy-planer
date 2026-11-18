@@ -216,12 +216,28 @@ function taskList(items) {
 }
 
 function orderedDays(){return Array.from({length:7},(_,k)=>(selectedDay+k)%7);}
+function weekTaskChart(key){
+ const weekly=state.weeklyHabits||[];
+ const weeklyDoneCount=weekly.filter(h=>weeklyDone(h,key)).length;
+ const weeklyPct=pct(weeklyDoneCount,weekly.length);
+ const days=Array.from({length:7},(_,i)=>{
+  const items=state.tasks.filter(t=>Number(t.day)===i&&!t.archived);
+  const done=items.filter(t=>t.done).length;
+  return {label:DAYS[i],done,total:items.length,value:pct(done,items.length)};
+ });
+ return `<div class="card week-progress-card"><div class="row between"><h3>◔ Прогресс недели</h3><span class="muted">${days.reduce((n,d)=>n+d.done,0)}/${days.reduce((n,d)=>n+d.total,0)} ежедневных</span></div>
+ <div class="week-chart" role="img" aria-label="Выполнение ежедневных задач по дням недели">${days.map(d=>`<div class="week-chart-col"><b>${d.total?d.value+"%":"—"}</b><div class="week-chart-track"><i style="height:${d.total?Math.max(5,d.value):0}%"></i></div><small>${d.label}</small><span>${d.done}/${d.total}</span></div>`).join("")}</div>
+ <div class="week-chart-legend"><span><i></i> Ежедневные задачи</span></div>
+ <div class="week-weekly-progress"><div class="row between"><b>Дела на всю неделю</b><strong>${weeklyDoneCount}/${weekly.length} · ${weeklyPct}%</strong></div><div class="progress"><i style="width:${weeklyPct}%"></i></div></div></div>`;
+}
+
 function week(v){
  const order=orderedDays(), selectedWeekKey=weekKey(weekOffset), weekly=state.weeklyHabits||[];
  v.innerHTML=section("План недели","Все дни на виду — выбранный день всегда первым ♡")+
  `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
  <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
  <div class="card"><div class="row between"><h3>✿ Дела на всю неделю</h3><span class="muted">${weekly.filter(x=>weeklyDone(x,selectedWeekKey)).length}/${weekly.length}</span></div>${weekly.map(x=>weeklyHabitRow(x,selectedWeekKey)).join("")||'<div class="empty">Добавь дело на всю неделю ♡</div>'}<button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
+ ${weekTaskChart(selectedWeekKey)}
  <div class="week-stack">${order.map(i=>{const items=dayTasks(i),done=items.filter(t=>t.done).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items)}<button class="mini" data-add="task" data-add-day="${i}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
 }
 
