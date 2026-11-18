@@ -109,7 +109,7 @@ function render() {
   });
   const hiddenTabs = state.hiddenTabs || [];
   if (hiddenTabs.includes(tab)) tab = "home";
-  const tabButtons = $("#tabs button");
+  const tabButtons = $$("#tabs button");
   tabButtons.forEach(b => {
     b.hidden = hiddenTabs.includes(b.dataset.tab);
     b.setAttribute("aria-hidden", String(b.hidden));
