@@ -249,7 +249,7 @@ document.addEventListener("click", e => {
     return;
   }
 
-  if (b.dataset.day !== undefined) {
+  if (b.dataset.day !== undefined && !b.dataset.habit) {
     selectedDay = Number(b.dataset.day);
     render();
     return;
