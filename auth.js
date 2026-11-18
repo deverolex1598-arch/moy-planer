@@ -20,6 +20,11 @@
   const loadUserData = async user => {
     ready = false;
     await (window.plannerAppReady || Promise.resolve());
+    // Never leave the previous guest's planner visible while this account is loading.
+    const cacheKey = "softPlanner:user:" + user.id;
+    let cachedState = {};
+    try { cachedState = JSON.parse(localStorage.getItem(cacheKey) || "{}") || {}; } catch (_) { cachedState = {}; }
+    window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: cachedState }));
     const { data, error } = await client.from(TABLE).select("data").eq("user_id", user.id).maybeSingle();
     if (error) { status("Не удалось загрузить личные данные: " + error.message, true); return; }
     if (data?.data && typeof data.data === "object") {
