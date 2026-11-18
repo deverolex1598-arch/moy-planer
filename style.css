@@ -227,7 +227,7 @@ body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9c
 .month-day.empty-day{border:0;background:transparent}
 .month-day.today{outline:2px solid var(--accent);outline-offset:1px}
 .month-day.selected{background:var(--soft);border-color:var(--accent);font-weight:800}
-.month-day i,.month-legend i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block}
+.month-day i,.month-legend i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block}.month-day-icons{display:block;max-width:100%;font-size:11px;line-height:1;letter-spacing:-2px;white-space:nowrap;overflow:hidden}.month-day{min-height:47px}
 .month-day i.task-dot,.month-legend i.task-dot{background:var(--good)}
 .month-legend{display:flex;gap:16px;justify-content:center;margin-top:13px;color:var(--muted);font-size:11px}
 .month-legend span{display:flex;align-items:center;gap:6px}
