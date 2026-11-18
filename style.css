@@ -146,3 +146,54 @@ body.theme-dark dialog{background:#343a39;color:var(--ink)}
 body.theme-dark dialog::backdrop{background:rgba(10,14,13,.72)}
 body.theme-dark .cycle-card fieldset{border-color:var(--line)}
 body.theme-dark .cycle-symptoms input{accent-color:#9ba58b}
+
+
+/* Тёплая шоколадная тема: какао, тёмный орех и мягкий кремовый */
+body.theme-brown{
+ --bg:#29251f;--card:#373129;--ink:#eee6d8;--muted:#b5a895;
+ --accent:#b69a70;--soft:#494033;--line:#5a4d3c;--good:#91a083;
+ --shadow:0 9px 28px rgba(0,0,0,.24);
+ background:radial-gradient(ellipse at 12% 0%,#463b2d 0,transparent 43%),var(--bg);
+}
+body.theme-brown h1,body.theme-brown h2,body.theme-brown h3{color:#eadcc5}
+body.theme-brown h1 span{color:#bda47e}
+body.theme-brown .quote{background:linear-gradient(115deg,#453a2d,#403a31);color:#d1c1a6;border:1px solid var(--line);box-shadow:none}
+body.theme-brown .card{background:linear-gradient(145deg,#3a342b,#342f28);border-color:var(--line);box-shadow:var(--shadow)}
+body.theme-brown .card:after{color:#a99572;opacity:.17}
+body.theme-brown .item:last-child:after{color:#b5a17e}
+body.theme-brown .primary{background:#947b55;color:#fff8ec;box-shadow:none}
+body.theme-brown .ghost,body.theme-brown .mini{background:#40392f;border-color:var(--line);color:var(--ink)}
+body.theme-brown .round{background:#494033;color:#d7c5a5}
+body.theme-brown .check{background:#302b24;border-color:#81735d}
+body.theme-brown .check.on{background:#78866d;border-color:#78866d}
+body.theme-brown .day,body.theme-brown .cycle-date{background:#302b24;border-color:var(--line);color:var(--muted)}
+body.theme-brown .day strong{color:var(--ink)}
+body.theme-brown .day.selected{background:#514532;border-color:#b69a70;color:#e8d7b8}
+body.theme-brown .cycle-date.actual{background:#8c7757;border-color:#8c7757;color:white}
+body.theme-brown .cycle-date.forecast{background:#4a4032;border:1px dashed #b69a70;color:#e8d7b8}
+body.theme-brown .cycle-dot{background:#8c7757}
+body.theme-brown .cycle-dot.forecast{background:#4a4032;border:1px dashed #b69a70}
+body.theme-brown .cycle-forecast,body.theme-brown .stat{background:#494033}
+body.theme-brown .cycle-forecast strong,body.theme-brown .cycle-stats b,body.theme-brown .big{color:#d2bd98}
+body.theme-brown .progress{background:#514735}
+body.theme-brown .progress i{background:#9a8968}
+body.theme-brown input,body.theme-brown textarea,body.theme-brown select{background:#302b24;border-color:var(--line);color:var(--ink)}
+body.theme-brown nav{background:#373129;border-color:var(--line)}
+body.theme-brown nav button.active{background:#514532;color:#e8d7b8;box-shadow:none}
+body.theme-brown .week-day-card.is-selected{background:#42392d;border-color:#a58b64}
+body.theme-brown .week-task-day{background:#302b24;border-color:var(--line)}
+body.theme-brown .pill{background:#514532;color:#e8d7b8}
+body.theme-brown dialog{background:#373129;color:var(--ink)}
+body.theme-brown dialog::backdrop{background:rgba(12,10,8,.76)}
+body.theme-brown .cycle-card fieldset{border-color:var(--line)}
+body.theme-brown .cycle-symptoms input{accent-color:#b69a70}
+body.theme-brown .care-check{display:flex;align-items:center;gap:10px;padding:9px 0;margin:0;border-bottom:1px solid var(--line);color:var(--ink)}
+body.theme-brown .care-check:last-child{border-bottom:0}
+body.theme-brown .care-check input{width:auto;accent-color:#a18b67}
+.care-check{display:flex;align-items:center;gap:10px;padding:9px 0;margin:0;border-bottom:1px solid var(--line)}
+.care-check input{width:auto;flex:none;accent-color:var(--accent)}
+.care-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.care-shortcuts button{min-height:44px}
+.care-card h3{margin-top:3px}
+#goalForm input{min-width:0}
+@media(max-width:390px){nav button small{font-size:8px}.care-shortcuts{grid-template-columns:1fr}}
