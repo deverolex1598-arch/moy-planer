@@ -39,7 +39,7 @@ function normalizeState(data) {
   s.reminderEnabled = Boolean(s.reminderEnabled);
   s.dailyHabits.forEach(h => {
     if (!Array.isArray(h.done)) h.done = Array(7).fill(false);
-    while (h.done.length < 7) h.done.push(false);
+    h.done = Array.from({length:7}, (_,i) => Boolean(h.done[i]));
   });
   return s;
 }
@@ -91,7 +91,7 @@ function render() {
   });
   $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   let v = $("#view");
-  ({home, week, calendar, habits, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
+  ({home, week, habits, notes, archive, stats, cycle: window.cycleTab, more}[tab] || home)(v);
 }
 
 function section(title, sub = "") {
@@ -166,7 +166,7 @@ function habits(v) {
     `<div class="card"><div class="row between"><h3>♡ Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
     ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
     <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item ${h.done?"done":""}"><button class="check ${h.done?"on":""}" data-weekly-habit="${h.id}">${h.done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
     <div class="card"><h3>Отметки ежедневных привычек</h3>${state.dailyHabits.map(h=>`<div class="habitweek"><b>${escapeHtml(h.name)}</b><div class="habitdays">${DAYS.map((d,i)=>`<button class="check ${h.done[i]?"on":""}" data-habit="${h.id}" data-day="${i}">${h.done[i]?"✓":d[0]}</button>`).join("")}</div></div>`).join("")}</div>`;
 }
 
