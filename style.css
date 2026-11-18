@@ -197,3 +197,22 @@ body.theme-brown .care-check input{width:auto;accent-color:#a18b67}
 .care-card h3{margin-top:3px}
 #goalForm input{min-width:0}
 @media(max-width:390px){nav button small{font-size:8px}.care-shortcuts{grid-template-columns:1fr}}
+
+
+/* Дополнительные светлые темы планера */
+body.theme-peach{--bg:#fff6f0;--card:#fffdfa;--ink:#654b43;--muted:#a9877b;--accent:#e6a083;--soft:#fbe9df;--line:#f1d9cc;--good:#91a98d;background:radial-gradient(ellipse at 12% 0%,#fce5d8 0,transparent 44%),var(--bg)}
+body.theme-peach .quote{background:linear-gradient(115deg,#fbe5dc,#fff0e5);color:#936c5d}
+body.theme-peach .primary{background:#d98e70;color:white}
+body.theme-peach .ghost,body.theme-peach .mini{background:#fff0e8;border-color:var(--line);color:var(--ink)}
+body.theme-peach nav button.active{background:#fbe5dc;color:#a7654f}
+body.theme-peach .day.selected{background:#f8dfd3;border-color:#e6a083;color:#8b5948}
+body.theme-peach .progress i{background:#e6a083}
+body.theme-blue{--bg:#f2f8fc;--card:#fff;--ink:#40566a;--muted:#8299aa;--accent:#79a9cb;--soft:#e4f0f8;--line:#d7e6f0;--good:#86aa9b;background:radial-gradient(ellipse at 12% 0%,#e1eff8 0,transparent 44%),var(--bg)}
+body.theme-blue .quote{background:linear-gradient(115deg,#e3f0f8,#edf4f8);color:#5f829c}
+body.theme-blue .primary{background:#6f9fc2;color:white}
+body.theme-blue .ghost,body.theme-blue .mini{background:#edf5fa;border-color:var(--line);color:var(--ink)}
+body.theme-blue nav button.active{background:#e1eff8;color:#4d7d9e}
+body.theme-blue .day.selected{background:#dcecf7;border-color:#79a9cb;color:#456f8d}
+body.theme-blue .progress i{background:#79a9cb}
+body.theme-blue .cycle-date.actual{background:#79a9cb;border-color:#79a9cb;color:white}
+body.theme-blue .cycle-date.forecast{background:#e4f0f8;border:1px dashed #79a9cb;color:#456f8d}
