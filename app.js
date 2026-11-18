@@ -528,6 +528,20 @@ $("#settingsBtn")?.addEventListener("click", () => {
 });
 
 document.addEventListener("click", e => {
+  const menuButton = e.target.closest("[data-toggle-tab]");
+  if (menuButton) {
+    const id = menuButton.dataset.toggleTab;
+    state.hiddenTabs = state.hiddenTabs || [];
+    state.hiddenTabs = state.hiddenTabs.includes(id)
+      ? state.hiddenTabs.filter(x => x !== id)
+      : [...state.hiddenTabs, id];
+    save();
+    render();
+    return;
+  }
+});
+
+document.addEventListener("click", e => {
   const b = e.target.closest("[data-theme]");
   if (!b) return;
   state.theme = b.dataset.theme;
