@@ -35,6 +35,7 @@ function normalizeState(data) {
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
   s.theme = s.theme || "pink";
+  s.hiddenTabs = Array.isArray(s.hiddenTabs) ? s.hiddenTabs.filter(x => ["week","cycle"].includes(x)) : [];
   if (!s.themeStyleV2) { s.theme = "brown"; s.themeStyleV2 = true; }
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
@@ -93,7 +94,12 @@ function render() {
   $("#todayLabel").textContent = today.toLocaleDateString("ru-RU", {
     weekday:"long", day:"numeric", month:"long", year:"numeric"
   });
-  $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  const hiddenTabs = state.hiddenTabs || [];
+  $("#tabs button").forEach(b => {
+    b.hidden = hiddenTabs.includes(b.dataset.tab);
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  if (hiddenTabs.includes(tab)) tab = "home";
   let v = $("#view");
   ({home, week, settings: settingsView, cycle: window.cycleTab}[tab] || home)(v);
 }
@@ -144,8 +150,10 @@ function settingsView(v) {
   const themes = ["pink","peach","blue","beige","green","lavender","brown","dark"];
   const labels = ["Розовая","Персиковая","Голубая","Бежевая","Шалфейная","Лавандовая","Шоколадная","Ночная"];
   const weekly = state.weeklyHabits || [];
+  const menuTabs = [{id:"week",label:"Неделя"},{id:"cycle",label:"Цикл"}];
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
-    `<div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
+    `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной.</div></div>
+    <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><div class="row between"><h3>Редактирование привычек</h3><button class="mini" data-add="habit">＋ Добавить</button></div>
     ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">Изменить</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
     <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
