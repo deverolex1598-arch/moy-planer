@@ -12,6 +12,21 @@ const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
 const intervals=c=>{const p=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));return p.slice(1).map((x,i)=>diff(p[i].start,x.start)).filter(n=>n>=15&&n<=60)};
 const prediction=c=>{const p=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));return c.forecastOverride|| (p.length?plus(p[p.length-1].start,avg(intervals(c))||28):"")};
 const select=(n,l,opts,val)=>'<label>'+l+'<select name="'+n+'"><option value="">Не отмечено</option>'+opts.map(x=>'<option '+(x===val?'selected':'')+'>'+x+'</option>').join("")+'</select></label>';
+let monthOffset=0;
+function monthCalendar(c){
+ const now=new Date(),base=new Date(now.getFullYear(),now.getMonth()+monthOffset,1,12),year=base.getFullYear(),month=base.getMonth();
+ const first=(base.getDay()+6)%7,days=new Date(year,month+1,0).getDate(),cells=Math.ceil((first+days)/7)*7;
+ const periods=c.periods.slice().sort((a,b)=>a.start.localeCompare(b.start));
+ const latest=periods[periods.length-1];
+ const forecast=prediction(c); const bleedLen=latest&&latest.end?Math.max(1,Math.min(10,diff(latest.start,latest.end)+1)):5;
+ const actualDays=new Set(); periods.forEach(p=>{if(!p.end)return;for(let d=p.start;d<=p.end;d=plus(d,1))actualDays.add(d);});
+ const forecastDays=new Set(); if(forecast){for(let i=0;i<bleedLen;i++)forecastDays.add(plus(forecast,i));}
+ const labels=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+ let html='<div class="card cycle-card"><div class="cycle-month-head"><button class="ghost" type="button" data-cycle-month="-1">‹</button><b class="cycle-month-title">'+esc(base.toLocaleDateString("ru-RU",{month:"long",year:"numeric"}))+'</b><button class="ghost" type="button" data-cycle-month="1">›</button></div><div class="cycle-month-grid">'+labels.map(x=>'<div class="cycle-weekday">'+x+'</div>').join("");
+ for(let i=0;i<cells;i++){const n=i-first+1,d=new Date(year,month,n,12),k=key(d),outside=d.getMonth()!==month,classes=['cycle-date'];if(outside)classes.push('outside');if(k===today)classes.push('today');if(actualDays.has(k))classes.push('actual');else if(forecastDays.has(k))classes.push('forecast');html+='<div class="'+classes.join(' ')+'">'+d.getDate()+'</div>';}
+ html+='</div><div class="cycle-legend"><span><i class="cycle-dot"></i> Менструация</span><span><i class="cycle-dot forecast"></i> Плановые дни</span></div><p class="muted">Плановые даты рассчитаны приблизительно по истории цикла. Их можно скорректировать ниже.</p></div>';
+ return html;
+}
 function cycleTab(v){
  const c=cdata(),p=c.periods.slice().sort((a,b)=>b.start.localeCompare(a.start)),next=prediction(c),a=avg(intervals(c)),day=window.cycleLogDay||today,log=c.logs[day]||{};
  const symptoms=[...new Set(["Спазмы","Головная боль","Вздутие","Акне","Чувствительность груди","Тошнота","Усталость",...c.customSymptoms])];
