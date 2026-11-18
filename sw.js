@@ -1,4 +1,4 @@
-const CACHE = "soft-planner-v8";
+const CACHE = "soft-planner-v9";
 const FILES = ["./", "index.html", "style.css", "app.js", "cycle.js", "auth.js", "seed.json", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", event => {
