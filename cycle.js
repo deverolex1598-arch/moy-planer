@@ -5,7 +5,7 @@ const key=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffse
 const date=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d,12)};
 const plus=(s,n)=>{const d=date(s);d.setDate(d.getDate()+n);return key(d)};
 const diff=(a,b)=>Math.round((date(b)-date(a))/86400000);
-const validDate=s=>/^\\d{4}-\\d{2}-\\d{2}$/.test(s)&&!Number.isNaN(date(s).getTime())&&key(date(s))===s;
+const validDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(date(s).getTime())&&key(date(s))===s;
 const today=key(new Date());
 const cdata=()=>{state.cycle=state.cycle||{periods:[],logs:{},customSymptoms:[],forecastOverride:""};let c=state.cycle;c.periods=Array.isArray(c.periods)?c.periods:[];c.logs=c.logs||{};c.customSymptoms=c.customSymptoms||[];return c};
 const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
