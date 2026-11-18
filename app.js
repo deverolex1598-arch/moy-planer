@@ -52,8 +52,19 @@ function normalizeState(data) {
 function save() {
   const userId = window.plannerCurrentUserId;
   const key = userId ? "softPlanner:user:" + userId : "softPlanner";
-  localStorage.setItem(key, JSON.stringify(state));
-  if (userId && typeof window.plannerCloudSave === "function") window.plannerCloudSave(state);
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+    const status = $("#storageStatus");
+    if (status) status.textContent = "Данные хранятся на этом устройстве";
+  } catch (error) {
+    const status = $("#storageStatus");
+    if (status) status.textContent = "Хранение на устройстве недоступно — записи пока останутся открытыми в этой вкладке";
+    console.warn("Planner local storage is unavailable", error);
+  }
+  if (userId && typeof window.plannerCloudSave === "function") {
+    try { window.plannerCloudSave(state); }
+    catch (error) { console.warn("Planner cloud save failed", error); }
+  }
 }
 
 window.addEventListener("planner-cloud-load", event => {
@@ -516,30 +527,40 @@ $("#editDialog")?.addEventListener("close", () => {
 $("#quoteBtn")?.addEventListener("click", quote);
 
 function init() {
-  const saved = localStorage.getItem(window.plannerCurrentUserId ? "softPlanner:user:" + window.plannerCurrentUserId : "softPlanner");
+  let saved = null;
+  try {
+    const key = window.plannerCurrentUserId ? "softPlanner:user:" + window.plannerCurrentUserId : "softPlanner";
+    saved = localStorage.getItem(key);
+  } catch (error) {
+    console.warn("Planner local storage could not be read; loading starter data", error);
+  }
   if (saved) {
     try {
       state = normalizeState(JSON.parse(saved));
       quote();
-    } catch (e) {
-      state = normalizeState({});
+      render();
+      return Promise.resolve();
+    } catch (error) {
+      console.warn("Saved planner data could not be parsed; loading starter data", error);
     }
-    render();
-    return Promise.resolve();
   }
-  return fetch("seed.json")
-    .then(r => r.ok ? r.json() : {})
+  return fetch("seed.json", { cache: "no-store" })
+    .then(r => {
+      if (!r.ok) throw new Error("Не удалось загрузить начальные данные планера");
+      return r.json();
+    })
     .then(data => {
       state = normalizeState(data);
       quote();
-      save();
       render();
+      save();
     })
-    .catch(() => {
+    .catch(error => {
+      console.error("Planner startup fallback", error);
       state = normalizeState({});
       quote();
-      save();
       render();
+      save();
     });
 }
 
