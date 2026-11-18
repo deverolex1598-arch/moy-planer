@@ -51,3 +51,17 @@ body.theme-dark{--bg:#22232b;--card:#2e303a;--ink:#f1eaf0;--muted:#aaa2b2;--acce
 .progress-charts .card {
   min-width: 0;
 }
+
+
+/* Главная: недельный обзор и заметки выбранного дня */
+.home-progress .donut-wrap{flex-direction:row;align-items:center;margin:0;gap:14px}
+.home-progress .donut{width:112px;flex:none}
+.home-week{display:grid;grid-template-columns:1fr;gap:8px;margin:8px 0 14px}
+.week-task-day{padding:8px 10px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}
+.week-task-day .item{padding:7px 0}
+.week-task-day .empty{padding:9px 0;text-align:left}
+.note-preview{padding:10px 0;border-top:1px solid var(--line)}
+.note-preview p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;margin:6px 0}
+.quick-add{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.quick-add button{flex:1;min-width:95px}
+@media(min-width:600px){.home-week{grid-template-columns:1fr 1fr}}

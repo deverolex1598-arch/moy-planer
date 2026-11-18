@@ -93,16 +93,22 @@ function progress(n) {
 }
 
 function home(v) {
-  let h = state.dailyHabits.reduce((n,x) => n + (x.done[selectedDay] ? 1 : 0), 0);
-  let total = state.dailyHabits.length;
-  let ts = dayTasks(selectedDay);
-  v.innerHTML = section("Сегодня","Небольшие шаги — тоже результат") +
-    `<div class="card"><div class="row between"><div><div class="muted">Привычки за день</div><div class="big">${h}/${total}</div></div><div class="big">${pct(h,total)}%</div></div>${progress(pct(h,total))}</div>
-    <div class="card"><div class="row between"><h3>Выбери день</h3><button class="mini" data-go="week">Вся неделя</button></div>${dayPicker()}</div>
-    <div class="card"><div class="row between"><h3>Привычки</h3><button class="mini" data-go="habits">Изменить</button></div>${state.dailyHabits.map(x => habitRow(x,selectedDay)).join("")}</div>
-    <div class="card"><div class="row between"><h3>Задачи · ${DAYS[selectedDay]}</h3><button class="mini" data-add="task">＋ Добавить</button></div>${taskList(ts)}</div>`;
+  const h = state.dailyHabits.reduce((n,x) => n + (x.done[selectedDay] ? 1 : 0), 0);
+  const total = state.dailyHabits.length;
+  const todayNotes = state.notes.filter(n => Number(n.day ?? selectedDay) === selectedDay && !n.archived);
+  const weekTasks = DAYS.map((day,i) => {
+    const items = dayTasks(i);
+    return `<div class="week-task-day"><div class="row between"><b>${day}</b><button class="mini" data-day="${i}">${i===selectedDay?"Выбран":"Выбрать"}</button></div>${taskList(items)}</div>`;
+  }).join("");
+  v.innerHTML = section("Главная","Твой день — в твоём ритме") +
+    `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки за сегодня</div><div class="big">${h} из ${total}</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
+    <div class="card"><div class="row between"><h3>Привычки на сегодня · ${DAYS[selectedDay]}</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x => habitRow(x,selectedDay)).join("") || '<div class="empty">Добавь первую привычку ♡</div>'}</div>
+    <div class="card"><div class="row between"><h3>Задачи на неделю</h3><button class="mini" data-go="week">Открыть неделю</button></div><div class="home-week">${weekTasks}</div><button class="primary" data-add="task" data-add-day="${selectedDay}">＋ Добавить задачу</button></div>
+    <div class="card"><div class="row between"><h3>Выбранный день</h3><span class="muted">${FULL[selectedDay]}</span></div>${dayPicker()}</div>
+    <div class="card"><div class="row between"><div><h3>Заметки на выбранный день</h3><div class="muted">${FULL[selectedDay]}</div></div><button class="mini" data-add="note">＋ Заметка</button></div>
+    ${todayNotes.map(n => `<div class="note-preview"><b>${escapeHtml(n.title || "Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("") || '<div class="empty">На этот день заметок пока нет ♡</div>'}</div>
+    <div class="quick-add"><button class="primary" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button><button class="ghost" data-add="note">＋ Заметка</button></div>`;
 }
-
 function dayPicker() {
   return `<div class="daygrid">${DAYS.map
 
@@ -138,11 +144,11 @@ function week(v) {
 }
 
 function notes(v) {
-  v.innerHTML = section("Заметки","Мысли, идеи и всё важное") +
-    `<div class="card"><button class="primary" data-add="note">＋ Новая заметка</button></div>
-    ${state.notes.map(n => `<div class="card"><div class="row between"><h3>${escapeHtml(n.title || "Без названия")}</h3><button class="mini" data-edit-note="${n.id}">✎</button></div><p>${escapeHtml(n.text)}</p><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("") || `<div class="empty">Здесь пока пусто ♡</div>`}`;
+  const items = state.notes.filter(n => Number(n.day ?? selectedDay) === selectedDay && !n.archived);
+  v.innerHTML = section("Заметки","Выбери день — и увидишь его записи") +
+    `<div class="card"><h3>День</h3>${dayPicker()}<button class="primary" data-add="note">＋ Новая заметка</button></div>
+    ${items.map(n => `<div class="card"><div class="row between"><h3>${escapeHtml(n.title || "Без названия")}</h3><button class="mini" data-edit-note="${n.id}">✎</button></div><p>${escapeHtml(n.text)}</p><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("") || `<div class="empty">На ${FULL[selectedDay].toLowerCase()} пока нет заметок ♡</div>`}`;
 }
-
 function archive(v) {
   v.innerHTML = section("Архив","Завершённые и отложенные задачи") +
     (state.archive.length ? state.archive.map(t => `<div class="card"><div class="itemtext">${escapeHtml(t.title)}</div><button class="mini" data-restore="${t.id}">Вернуть</button><button class="mini" data-delete-archive="${t.id}">Удалить</button></div>`).join("") : `<div class="empty">Архив пока пуст ♡</div>`);
@@ -369,7 +375,7 @@ document.addEventListener("submit", e => {
         id:newId(),
         title:values.title,
         text:values.text,
-        createdAt:new Date().toISOString()
+        day:selectedDay, createdAt:new Date().toISOString()
       });
     }
   }
@@ -383,11 +389,14 @@ $("#editDialog")?.addEventListener("close", () => {
   editing = null;
 });
 
+$("#quoteBtn")?.addEventListener("click", quote);
+
 function init() {
   const saved = localStorage.getItem("softPlanner");
   if (saved) {
     try {
       state = normalizeState(JSON.parse(saved));
+      quote();
     } catch (e) {
       state = normalizeState({});
     }
@@ -399,11 +408,13 @@ function init() {
 .then(r => r.ok ? r.json() : {})
       .then(data => {
         state = normalizeState(data);
+        quote();
         save();
         render();
       })
       .catch(() => {
         state = normalizeState({});
+        quote();
         save();
         render();
       });
