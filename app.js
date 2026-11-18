@@ -184,10 +184,7 @@ function closeEditor() {
 }
 
 function byId(list,id) {
-  re
-
-
-turn list.find(x => String(x.id) === String(id));
+  return list.find(x => String(x.id) === String(id));
 }
 
 function newId() {
