@@ -504,8 +504,8 @@ function init() {
 
 $("#settingsBtn")?.addEventListener("click", () => {
   tab = "settings";
-  const themes = ["pink","beige","green","lavender","dark"];
-  const labels = ["Розовая","Бежевая","Зелёная","Лавандовая","Тёмная"];
+  const themes = ["brown","beige","green","lavender"];
+  const labels = ["Шоколадная","Бежевая","Зелёная","Лавандовая"];
   $("#view").innerHTML = section("Настройки","Выбери оформление планера") +
     `<div class="card"><h3>Темы</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>`;
 });
