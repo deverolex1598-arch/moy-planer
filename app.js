@@ -807,11 +807,9 @@ document.addEventListener("change", e => {
   if (e.target.matches("[data-custom-theme-color]")) {
     state.customTheme = state.customTheme && typeof state.customTheme === "object" ? state.customTheme : {bg:"#fff5f4",card:"#fffdfb",ink:"#68434a",accent:"#e58da2"};
     state.customTheme[e.target.dataset.customThemeColor] = e.target.value;
-    state.theme = "custom";
     save();
-    applyTheme();
     const status = $("#view .custom-theme-actions .muted");
-    if (status) status.textContent = "Изменения сохранены · твоя палитра активна";
+    if (status) status.textContent = "Цвет сохранён · нажми «Применить мои цвета», чтобы включить палитру";
     return;
   }
   if (e.target.id === "diaryDateFilter") { diaryDateFilter = e.target.value || ""; render(); return; }
