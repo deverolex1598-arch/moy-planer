@@ -296,3 +296,18 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 .cycle-range-picker .cycle-date.range-edge{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}
 .cycle-range-hint{font-size:11px;min-height:18px;margin:10px 2px 2px}
 #savePeriodRange:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* Компактные раскрывающиеся блоки цикла и поиск по дневнику */
+.cycle-fold{margin:10px 0 14px;border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden}
+.cycle-fold>summary{display:flex;flex-direction:column;gap:4px;padding:14px 42px 14px 16px;cursor:pointer;list-style:none;color:var(--ink);font-weight:700;position:relative}
+.cycle-fold>summary::-webkit-details-marker{display:none}
+.cycle-fold>summary:after{content:"＋";position:absolute;right:16px;top:12px;color:var(--accent);font-size:18px}
+.cycle-fold[open]>summary:after{content:"−"}
+.cycle-fold>summary small{font-size:11px;font-weight:400;color:var(--muted);line-height:1.45}
+.cycle-fold[open]>.card{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+.cycle-fold-charts>.card{padding:14px}
+.cycle-daily-fold form{padding:0 14px 14px}
+.cycle-daily-fold[open]>summary{border-bottom:1px solid var(--line)}
+.diary-date-filter{display:block;margin:12px 0;color:var(--muted);font-size:12px}
+.diary-date-filter input{display:block;width:100%;box-sizing:border-box;margin-top:6px}
