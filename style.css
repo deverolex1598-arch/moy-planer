@@ -377,3 +377,8 @@ body.theme-custom .item.done .itemtext{color:var(--muted)}
 .theme-flower:active{transform:rotate(35deg) scale(.94)}
 .theme-flower:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 #themeSettings{scroll-margin-top:16px}
+
+
+/* Подсказка о доступности облачной синхронизации */
+.account-sync-note{margin:10px 0 16px;padding:11px 13px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;background:var(--soft);color:var(--ink);font-size:12px;line-height:1.55}
+.account-sync-note strong{color:var(--accent)}
