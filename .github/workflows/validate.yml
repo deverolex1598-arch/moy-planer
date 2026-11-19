@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - auth-and-cycle-foundation
+      - layero-ready
   pull_request:
     branches:
       - planner-cozy-redesign
+      - layero-ready
 jobs:
   validate:
     runs-on: ubuntu-latest
