@@ -4,7 +4,7 @@ const FULL = ["Понедельник","Вторник","Среда","Четве
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
-let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null, calendarMonthOffset = 0, selectedCalendarDate = dateKey(new Date());
+let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null, calendarMonthOffset = 0, selectedCalendarDate = dateKey(new Date()), diaryDateFilter = "";
 
 const today = new Date();
 const monday = d => {
@@ -101,6 +101,12 @@ window.addEventListener("planner-cloud-load", event => {
   render();
 });
 
+function taskEmoji(title) {
+  const value = String(title || "").toLowerCase();
+  const themes = [[/уборк|прибрат|помыть|порядок|пылесос|стирк/, "🧹"], [/спорт|тренир|зарядк|йог|пробеж|прогул/, "🏃‍♀️"], [/вода|пить/, "💧"], [/еда|завтрак|обед|ужин|готов|рецепт|магазин|продукт/, "🍓"], [/работ|учеб|урок|курс|экзамен|проект/, "📚"], [/книг|читать/, "📖"], [/звон|позвон|написать|сообщ|письм/, "💌"], [/врач|лекар|здоров|анализ|аптек/, "🩺"], [/деньг|оплат|счёт|бюджет|покуп/, "💳"], [/цвет|сад|растен|полив/, "🌷"], [/сон|отдых|расслаб|ванн/, "🫧"], [/кот|собак|питом|живот/, "🐾"], [/красот|уход|маск|волос|кож/, "🧴"], [/музык|песн|танц/, "🎵"], [/мечт|цель|план/, "✨"]];
+  const match = themes.find(([pattern]) => pattern.test(value));
+  return match ? match[1] : "🌸";
+}
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"'"
@@ -156,7 +162,7 @@ function weekKey(offset = 0) {
 function weeklyDone(h, key) { return Boolean(h.doneWeeks && h.doneWeeks[key]); }
 function weeklyHabitRow(h, key) {
   const done = weeklyDone(h, key);
-  return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button></div>`;
+  return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button></div>`;
 }
 
 function pct(done,total) {
@@ -233,9 +239,9 @@ function settingsView(v) {
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><div class="row between"><h3>Мои задачи</h3><button class="mini" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить</button></div>
-    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
+    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${taskEmoji(t.title)} ${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
     <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
 
 function more(v) {
@@ -255,7 +261,7 @@ function dayPicker() {
 function taskList(items,date) {
   return items.length ? items.map(t => {
     const done=taskIsDone(t,date);
-    return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-task="${t.id}" data-task-date="${date}" aria-label="${done?"Отметить невыполненной":"Отметить выполненной"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`;
+    return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-task="${t.id}" data-task-date="${date}" aria-label="${done?"Отметить невыполненной":"Отметить выполненной"}">${done?"✓":""}</button><span class="itemtext">${taskEmoji(t.title)} ${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`;
   }).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
 }
 
@@ -286,12 +292,14 @@ function week(v){
 }
 
 function diary(v) {
-  const entries = state.diaryEntries || [];
-  v.innerHTML = section("Дневник","Мысли, события и маленькие открытия ♡") +
+  const entries = (state.diaryEntries || []).slice().sort((a,b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
+  const filtered = diaryDateFilter ? entries.filter(x => x.createdAt && dateKey(new Date(x.createdAt)) === diaryDateFilter) : entries;
+  v.innerHTML = section("Дневник","Сначала новые записи · можно найти нужный день ♡") +
     `<div class="card"><div class="row between"><h3>Мои записи</h3><button class="primary" data-add="diary">＋ Новая запись</button></div>
-    ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
+    <label class="diary-date-filter">Найти записи за дату<input id="diaryDateFilter" type="date" value="${escapeHtml(diaryDateFilter)}"></label>
+    ${diaryDateFilter ? "<button class=\"mini\" data-diary-clear>Показать все записи</button>" : ""}
+    ${filtered.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || (diaryDateFilter ? "<div class=\"empty\">За эту дату записей нет ♡</div>" : "<div class=\"empty\">Здесь будут храниться твои мысли и воспоминания ♡</div>")}</div>`;
 }
-
 function orthodoxEaster(year) {
   const a=year%4,b=year%7,c=year%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7;
   const month=Math.floor((d+e+114)/31),day=(d+e+114)%31+1;
@@ -402,17 +410,17 @@ function calendar(v){
     <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Сначала твои личные праздники и события</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
     ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день нет личных праздников или событий ♡</div>'}</div>
     ${holidayForDateCard(selectedCalendarDate)}
-    <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
-    <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
+    <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${taskEmoji(t.title)} ${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
+    <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${taskEmoji(h.name)} ${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
     ${cycleCard}`;
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
   v.innerHTML=section("Задачи","Общий список задач для разделов «Сегодня» и «Неделя» ♡")+
     `<div class="card"><div class="row between"><h3>Мои задачи</h3><button class="primary" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить задачу</button></div>
-    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь первую задачу ♡</div>'}</div>
+    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${taskEmoji(t.title)} ${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь первую задачу ♡</div>'}</div>
     <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить дело</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>`;
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>`;
 }
 
 function notes(v) {
@@ -581,6 +589,7 @@ document.addEventListener("click", e => {
 
   if (b.dataset.editDiary) { const n=byId(state.diaryEntries,b.dataset.editDiary); if(n)openEditor("diary",n); return; }
   if (b.dataset.deleteDiary) { state.diaryEntries=state.diaryEntries.filter(x=>String(x.id)!==b.dataset.deleteDiary); save(); render(); return; }
+  if (b.hasAttribute("data-diary-clear")) { diaryDateFilter=""; render(); return; }
 
   if (b.dataset.editNote) {
     const n = byId(state.notes,b.dataset.editNote);
@@ -629,6 +638,7 @@ document.addEventListener("click", e => {
 });
 
 document.addEventListener("change", e => {
+  if (e.target.id === "diaryDateFilter") { diaryDateFilter = e.target.value || ""; render(); return; }
   if (e.target.matches("[data-care-item]")) {
     const day=dateKey(today), idx=Number(e.target.dataset.careItem);
     state.selfCareLog[day]=Array.isArray(state.selfCareLog[day])?state.selfCareLog[day]:[];
