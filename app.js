@@ -286,7 +286,7 @@ function settingsView(v) {
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><h3>Стандартные ежедневные дела</h3><p class="muted">Можно добавить дело в ежедневный список или скрыть его. Скрытые дела останутся здесь.</p>
-    ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}</div>
+    ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}    ${(state.tasks||[]).some(t=>!t.archived&&!t.standardTaskId)?'<button class="mini danger" data-delete-custom-daily-tasks="yes">Удалить все собственные задачи</button>':""}</div>
     ${standardWeeklySettingsHtml()}
     <div class="card"><div class="row between"><h3>Мои дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
     ${weekly.filter(h=>!h.standardWeeklyTaskId).map(h=>`<div class="item"><span class="itemtext">${h.emoji || taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}${weekly.some(h=>!h.standardWeeklyTaskId)?'<button class="mini danger" data-delete-custom-weekly-tasks="yes">Удалить все собственные дела</button>':""}</div>`;
@@ -564,6 +564,11 @@ document.addEventListener("click", e => {
     const item=(state.standardWeeklyTasks||[]).find(x=>x.id===b.dataset.toggleStandardWeeklyTask);
     if(item){item.active=!item.active;if(item.active&&!state.weeklyHabits.some(h=>h.standardWeeklyTaskId===item.id)){state.weeklyHabits.push({id:"standard-weekly-"+item.id,name:item.title,emoji:item.emoji,repeatWeekly:true,standardWeeklyTaskId:item.id,doneWeeks:{}});}save();render();}
     return;
+  }
+  if (b.dataset.deleteCustomDailyTasks) {
+    if (!confirm("Удалить все собственные ежедневные задачи? Стандартные задачи останутся без изменений.")) return;
+    state.tasks = (state.tasks || []).filter(t => t.archived || Boolean(t.standardTaskId));
+    save();render();return;
   }
   if (b.dataset.deleteCustomWeeklyTasks) {
     if (!confirm("Удалить все собственные дела на неделю? Стандартные дела останутся без изменений.")) return;
