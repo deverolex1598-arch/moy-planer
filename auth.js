@@ -20,6 +20,46 @@
     if (user) status("Вход выполнен: " + user.email + ". Подключаю личные записи…");
     else status("Ты вышла из аккаунта. Записи на этом устройстве не удалены.");
   };
+  const mergePlannerStates = (accountState, guestState) => {
+    const account = accountState && typeof accountState === "object" ? accountState : {};
+    const guest = guestState && typeof guestState === "object" ? guestState : {};
+    const merged = { ...guest, ...account };
+    const arrayKeys = ["tasks", "dailyHabits", "weeklyHabits", "notes", "diaryEntries", "calendarEntries", "archive", "quotes", "goals"];
+    arrayKeys.forEach(key => {
+      const byKey = new Map();
+      const add = item => {
+        const identity = item && typeof item === "object" && item.id != null
+          ? String(item.id)
+          : JSON.stringify(item);
+        const previous = byKey.get(identity);
+        if (previous && item && typeof item === "object" && !Array.isArray(item)) {
+          const combined = { ...previous, ...item };
+          ["doneDates", "doneWeeks"].forEach(field => {
+            if (previous[field] || item[field]) combined[field] = { ...(previous[field] || {}), ...(item[field] || {}) };
+          });
+          byKey.set(identity, combined);
+        } else {
+          byKey.set(identity, item);
+        }
+      };
+      (Array.isArray(account[key]) ? account[key] : []).forEach(add);
+      (Array.isArray(guest[key]) ? guest[key] : []).forEach(add);
+      merged[key] = Array.from(byKey.values());
+    });
+    ["moods", "selfCareLog"].forEach(key => {
+      merged[key] = {
+        ...(account[key] && typeof account[key] === "object" ? account[key] : {}),
+        ...(guest[key] && typeof guest[key] === "object" ? guest[key] : {})
+      };
+    });
+    // Re-run the app's one-time migration if the guest copy still uses the older task format.
+    const guestHasLegacyTasks = Array.isArray(guest.dailyHabits) && guest.dailyHabits.length > 0;
+    const guestHasDayTasks = Array.isArray(guest.tasks) && guest.tasks.some(task =>
+      task && !task.date && !task.repeatDaily && Number.isInteger(Number(task.day))
+    );
+    if (guestHasLegacyTasks || guestHasDayTasks) merged.unifiedTasksV1 = false;
+    return merged;
+  };
   const loadUserData = async user => {
     ready = false;
     await (window.plannerAppReady || Promise.resolve());
@@ -36,8 +76,12 @@
       return;
     }
     if (data?.data && typeof data.data === "object") {
-      window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: data.data }));
-      status("Твои личные записи загружены и защищены аккаунтом.");
+      const guestRaw = localStorage.getItem("softPlanner");
+      let guestState = {};
+      try { guestState = guestRaw ? JSON.parse(guestRaw) || {} : {}; } catch (_) { guestState = {}; }
+      const mergedState = mergePlannerStates(data.data, guestState);
+      window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: mergedState }));
+      status(guestRaw ? "Личные записи объединены с сохранёнными записями на устройстве." : "Твои личные записи загружены и защищены аккаунтом.");
     } else {
       const cached = hadCachedState ? localStorage.getItem(cacheKey) : null;
       const guest = localStorage.getItem("softPlanner");
