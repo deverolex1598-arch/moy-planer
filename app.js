@@ -469,7 +469,7 @@ function calendar(v){
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
     const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(Array.isArray(state.calendarEntries)?state.calendarEntries:[]).filter(x=>x&&x.date===key);
     const isToday=key===dateKey(today),isSelected=key===selectedCalendarDate;
-    return `<button class="month-day ${isToday?"today":""} ${isSelected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join(""))}</small>`:""}</button>`;
+    return `<button class="month-day ${isToday?"today":""} ${isSelected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join("")}</small>`:""}</button>`;
   }).join("");
   const selected=new Date(selectedCalendarDate+"T12:00:00");
   const selectedLabel=selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
