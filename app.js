@@ -351,13 +351,15 @@ function calendar(v){
   const cycle=state.cycle||{},log=(cycle.logs||{})[selectedCalendarDate]||{};
   const period=(cycle.periods||[]).find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
   const hasCycle=Boolean(period||Object.values(log).some(x=>Array.isArray(x)?x.length:x));
-  const cycleCard=hasCycle?`<div class="card"><h3>🌸 Цикл и самочувствие за этот день</h3>${period?`<p><b>Менструация</b> · день ${Math.max(1,Math.floor((new Date(selectedCalendarDate+"T12:00:00")-new Date(period.start+"T12:00:00"))/86400000)+1)}</p>`:""}${log.pain?`<p>Боль: <b>${escapeHtml(log.pain)}</b></p>`:""}${log.bleeding?`<p>Выделения: <b>${escapeHtml(log.bleeding)}</b></p>`:""}${log.mood?`<p>Настроение: <b>${escapeHtml(log.mood)}</b></p>`:""}${log.symptoms?.length?`<p>Симптомы: ${escapeHtml(log.symptoms.join(", "))}</p>`:""}${log.notes?`<p>${escapeHtml(log.notes)}</p>`:""}</div>`:"";
+  const painScale={"Нет":0,"Лёгкая":1,"Умеренная":2,"Сильная":3},bleedScale={"Нет":0,"Мажущие":1,"Слабые":2,"Умеренные":3,"Обильные":4};
+  const painValue=painScale[log.pain]||0,bleedValue=bleedScale[log.bleeding]||0;
+  const cycleCard=hasCycle?`<div class="card"><h3>🌸 Цикл и самочувствие за этот день</h3><div class="day-cycle-graph">${log.pain?`<div><span>Боль</span><i><b style="width:${painValue/3*100}%"></b></i></div>`:""}${log.bleeding?`<div><span>Выделения</span><i><b style="width:${bleedValue/4*100}%"></b></i></div>`:""}</div>${period?`<p><b>Менструация</b> · день ${Math.max(1,Math.floor((new Date(selectedCalendarDate+"T12:00:00")-new Date(period.start+"T12:00:00"))/86400000)+1)}</p>`:""}${log.pain?`<p>Боль: <b>${escapeHtml(log.pain)}</b></p>`:""}${log.bleeding?`<p>Выделения: <b>${escapeHtml(log.bleeding)}</b></p>`:""}${log.mood?`<p>Настроение: <b>${escapeHtml(log.mood)}</b></p>`:""}${log.symptoms?.length?`<p>Симптомы: ${escapeHtml(log.symptoms.join(", "))}</p>`:""}${log.notes?`<p>${escapeHtml(log.notes)}</p>`:""}</div>`:"";
   v.innerHTML=section("Календарь","Месяц целиком — выбирай день и сохраняй важное ♡")+
     `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
     <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ Личные события</span></div></div>
-    ${holidayTodayCard()}
     <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Сначала твои личные праздники и события</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
     ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день нет личных праздников или событий ♡</div>'}</div>
+    ${holidayTodayCard()}
     <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
     <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
     ${cycleCard}`;
@@ -390,11 +392,13 @@ function donut(done,total,label) {
 
 function stats(v) {
   const tasks = state.tasks.filter(t => !t.archived);
-  const taskDone = tasks.reduce((n,t)=>n+Object.values(t.doneDates||{}).filter(Boolean).length,0);
+  const currentWeekDates=Array.from({length:7},(_,i)=>{const d=new Date(monday(today));d.setDate(d.getDate()+i);return dateKey(d);});
+  const taskDone=tasks.reduce((n,t)=>n+currentWeekDates.filter(d=>taskIsDone(t,d)&& (t.repeatDaily||t.date===d)).length,0);
+  const taskTotal=tasks.reduce((n,t)=>n+currentWeekDates.filter(d=>t.repeatDaily||t.date===d).length,0);
   v.innerHTML = section("Мой прогресс","Каждый маленький шаг имеет значение") +
-    `<div class="card"><h3>Выполнение задач</h3><div class="progress-charts">${donut(taskDone,tasks.length,"Задачи")}</div></div>
+    `<div class="card"><h3>Выполнение задач</h3><div class="progress-charts">${donut(taskDone,taskTotal,"Задачи за неделю")}</div></div>
     
-    <div class="card"><div class="row between"><span>Выполнено задач</span><b>${taskDone} из ${tasks.length}</b></div>${progress(pct(taskDone,tasks.length))}</div>`;
+    <div class="card"><div class="row between"><span>Выполнено задач</span><b>${taskDone} из ${taskTotal}</b></div>${progress(pct(taskDone,taskTotal))}</div>`;
 }
 
 function openEditor(type,item = {}) {
