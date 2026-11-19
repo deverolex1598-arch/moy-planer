@@ -455,7 +455,7 @@ function habits(v) {
 function notes(v) {
   const items = state.notes.filter(n => Number(n.day ?? selectedDay) === selectedDay && !n.archived);
   v.innerHTML = section("Заметки","Выбери день — и увидишь его записи") +
-    `<div class="card"><h3>День</h3>${dayPicker()}<button class="primary" data-add="note">＋ Новая заметка</button></div>
+    `<div class="card"><h3>День</h3>${dayPicker()}<button class="primary" data-add="note">＋ Новая заметка</button>${items.length ? '<button class="mini" data-delete-day-notes="yes">Удалить все заметки за этот день</button>' : ""}</div>
     ${items.map(n => `<div class="card"><div class="row between"><h3>${escapeHtml(n.title || "Без названия")}</h3><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button></div><p>${escapeHtml(n.text)}</p><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("") || `<div class="empty">На ${FULL[selectedDay].toLowerCase()} пока нет заметок ♡</div>`}`;
 }
 function archive(v) {
@@ -638,6 +638,14 @@ document.addEventListener("click", e => {
   }
 
   if (b.dataset.deleteWeeklyHabit) { state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==b.dataset.deleteWeeklyHabit); save(); render(); return; }
+
+  if (b.dataset.deleteDayNotes) {
+    if (!confirm("Удалить все заметки за этот день? Это действие нельзя отменить.")) return;
+    state.notes = state.notes.filter(x => x.archived || Number(x.day ?? selectedDay) !== selectedDay);
+    save();
+    render();
+    return;
+  }
 
   if (b.dataset.deleteNote) {
     state.notes = state.notes.filter(x => String(x.id) !== b.dataset.deleteNote);
