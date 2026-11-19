@@ -14,7 +14,7 @@
     window.plannerCurrentUserId = user?.id || null;
     $("signOut").hidden = !user;
     $("authForm").hidden = !!user;
-    $("accountBtn").textContent = user ? "♡ Аккаунт · Вход выполнен" : "♡ Аккаунт";
+    $("accountBtn").textContent = user ? "♡ В аккаунте" : "♡ Аккаунт";
     $("accountBtn").setAttribute("aria-label", user ? "Ты вошла в свой аккаунт" : "Войти в аккаунт");
     $("storageStatus").textContent = user ? "♡ Ты в своём аккаунте · подключаем синхронизацию" : "Данные хранятся на этом устройстве";
     if (user) status("Вход выполнен: " + user.email + ". Подключаю личные записи…");
