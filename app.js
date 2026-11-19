@@ -4,7 +4,7 @@ const FULL = ["Понедельник","Вторник","Среда","Четве
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
-let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null, calendarMonthOffset = 0, selectedCalendarDate = dateKey(new Date());
+let state, tab = "home", selectedDay = (new Date().getDay() + 6) % 7, weekOffset = 0, editing = null, calendarMonthOffset = 0, selectedCalendarDate = dateKey(new Date()), diaryDateFilter = "";
 
 const today = new Date();
 const monday = d => {
@@ -292,12 +292,14 @@ function week(v){
 }
 
 function diary(v) {
-  const entries = state.diaryEntries || [];
-  v.innerHTML = section("Дневник","Мысли, события и маленькие открытия ♡") +
+  const entries = (state.diaryEntries || []).slice().sort((a,b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
+  const filtered = diaryDateFilter ? entries.filter(x => x.createdAt && dateKey(new Date(x.createdAt)) === diaryDateFilter) : entries;
+  v.innerHTML = section("Дневник","Сначала новые записи · можно найти нужный день ♡") +
     `<div class="card"><div class="row between"><h3>Мои записи</h3><button class="primary" data-add="diary">＋ Новая запись</button></div>
-    ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
+    <label class="diary-date-filter">Найти записи за дату<input id="diaryDateFilter" type="date" value="${escapeHtml(diaryDateFilter)}"></label>
+    ${diaryDateFilter ? "<button class=\"mini\" data-diary-clear>Показать все записи</button>" : ""}
+    ${filtered.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || (diaryDateFilter ? "<div class=\"empty\">За эту дату записей нет ♡</div>" : "<div class=\"empty\">Здесь будут храниться твои мысли и воспоминания ♡</div>")}</div>`;
 }
-
 function orthodoxEaster(year) {
   const a=year%4,b=year%7,c=year%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7;
   const month=Math.floor((d+e+114)/31),day=(d+e+114)%31+1;
@@ -587,6 +589,7 @@ document.addEventListener("click", e => {
 
   if (b.dataset.editDiary) { const n=byId(state.diaryEntries,b.dataset.editDiary); if(n)openEditor("diary",n); return; }
   if (b.dataset.deleteDiary) { state.diaryEntries=state.diaryEntries.filter(x=>String(x.id)!==b.dataset.deleteDiary); save(); render(); return; }
+  if (b.hasAttribute("data-diary-clear")) { diaryDateFilter=""; render(); return; }
 
   if (b.dataset.editNote) {
     const n = byId(state.notes,b.dataset.editNote);
@@ -635,6 +638,7 @@ document.addEventListener("click", e => {
 });
 
 document.addEventListener("change", e => {
+  if (e.target.id === "diaryDateFilter") { diaryDateFilter = e.target.value || ""; render(); return; }
   if (e.target.matches("[data-care-item]")) {
     const day=dateKey(today), idx=Number(e.target.dataset.careItem);
     state.selfCareLog[day]=Array.isArray(state.selfCareLog[day])?state.selfCareLog[day]:[];
