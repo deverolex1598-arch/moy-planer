@@ -456,18 +456,21 @@ function calendar(v){
   const cells = Array.from({length:Math.ceil((firstOffset+daysInMonth)/7)*7},(_,i)=>{
     const dayNum=i-firstOffset+1;
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
-    const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(state.calendarEntries||[]).filter(x=>x.date===key);
+    const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(Array.isArray(state.calendarEntries)?state.calendarEntries:[]).filter(x=>x&&x.date===key);
     const isToday=key===dateKey(today),isSelected=key===selectedCalendarDate;
     return `<button class="month-day ${isToday?"today":""} ${isSelected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨").join(""))}</small>`:""}</button>`;
   }).join("");
   const selected=new Date(selectedCalendarDate+"T12:00:00");
   const selectedLabel=selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const entries=(state.calendarEntries||[]).filter(x=>x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
+  const entries=(Array.isArray(state.calendarEntries)?state.calendarEntries:[]).filter(x=>x&&x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
   const types={birthday:"🎂 Личный праздник",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
   const doneTasks=tasksForDate(selectedCalendarDate).filter(t=>taskIsDone(t,selectedCalendarDate));
   const selectedWeekKey=weekStartKey(selectedCalendarDate),weekDone=weeklyHabitsForWeek(selectedWeekKey).filter(h=>weeklyDone(h,selectedWeekKey));
-  const cycle=state.cycle||{},log=(cycle.logs||{})[selectedCalendarDate]||{};
-  const period=(cycle.periods||[]).find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
+  const cycle=state.cycle&&typeof state.cycle==="object"?state.cycle:{};
+  const cycleLogs=cycle.logs&&typeof cycle.logs==="object"?cycle.logs:{};
+  const log=cycleLogs[selectedCalendarDate]&&typeof cycleLogs[selectedCalendarDate]==="object"?cycleLogs[selectedCalendarDate]:{};
+  const cyclePeriods=Array.isArray(cycle.periods)?cycle.periods.filter(p=>p&&typeof p==="object"&&typeof p.start==="string"):[];
+  const period=cyclePeriods.find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
   const hasCycle=Boolean(period||Object.values(log).some(x=>Array.isArray(x)?x.length:x));
   const painScale={"Нет":0,"Лёгкая":1,"Умеренная":2,"Сильная":3},bleedScale={"Нет":0,"Мажущие":1,"Слабые":2,"Умеренные":3,"Обильные":4};
   const painValue=painScale[log.pain]||0,bleedValue=bleedScale[log.bleeding]||0;
