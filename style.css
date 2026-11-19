@@ -369,3 +369,11 @@ body.theme-custom .cycle-date.forecast{background:var(--soft);border-color:var(-
 body.theme-custom .cycle-dot{background:var(--accent)}
 body.theme-custom .cycle-dot.forecast{background:var(--soft);border-color:var(--accent)}
 body.theme-custom .item.done .itemtext{color:var(--muted)}
+
+
+/* Ромашка рядом с названием — быстрый переход к выбору темы */
+.brand-title{display:flex;align-items:center;gap:7px}
+.theme-flower{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--soft);color:var(--accent);font:inherit;font-size:25px;line-height:1;vertical-align:middle;transition:transform .18s ease,background .18s ease}
+.theme-flower:active{transform:rotate(35deg) scale(.94)}
+.theme-flower:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+#themeSettings{scroll-margin-top:16px}
