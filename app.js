@@ -289,7 +289,7 @@ function settingsView(v) {
     ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}</div>
     ${standardWeeklySettingsHtml()}
     <div class="card"><div class="row between"><h3>Мои дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.filter(h=>!h.standardWeeklyTaskId).map(h=>`<div class="item"><span class="itemtext">${h.emoji || taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    ${weekly.filter(h=>!h.standardWeeklyTaskId).map(h=>`<div class="item"><span class="itemtext">${h.emoji || taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}${weekly.some(h=>!h.standardWeeklyTaskId)?'<button class="mini danger" data-delete-custom-weekly-tasks="yes">Удалить все собственные дела</button>':""}</div>`;
 }
 
 function more(v) {
@@ -564,6 +564,11 @@ document.addEventListener("click", e => {
     const item=(state.standardWeeklyTasks||[]).find(x=>x.id===b.dataset.toggleStandardWeeklyTask);
     if(item){item.active=!item.active;if(item.active&&!state.weeklyHabits.some(h=>h.standardWeeklyTaskId===item.id)){state.weeklyHabits.push({id:"standard-weekly-"+item.id,name:item.title,emoji:item.emoji,repeatWeekly:true,standardWeeklyTaskId:item.id,doneWeeks:{}});}save();render();}
     return;
+  }
+  if (b.dataset.deleteCustomWeeklyTasks) {
+    if (!confirm("Удалить все собственные дела на неделю? Стандартные дела останутся без изменений.")) return;
+    state.weeklyHabits = (state.weeklyHabits || []).filter(h => Boolean(h.standardWeeklyTaskId));
+    save();render();return;
   }
   if (b.dataset.deleteTodayTasks) {
     if (!confirm("Удалить все задачи за сегодня? Повторяющиеся задачи скроются только на сегодня и появятся снова завтра.")) return;
