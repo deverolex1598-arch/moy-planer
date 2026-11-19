@@ -53,6 +53,26 @@ function normalizeState(data) {
     if (!Array.isArray(h.done)) h.done = Array(7).fill(false);
     h.done = Array.from({length:7}, (_,i) => Boolean(h.done[i]));
   });
+  if (!s.unifiedTasksV1) {
+    const start = monday(new Date());
+    s.tasks = s.tasks.map(t => {
+      if (t.date || t.repeatDaily) return t;
+      if (Number.isInteger(Number(t.day))) {
+        const d = new Date(start); d.setDate(d.getDate()+Number(t.day));
+        const date = dateKey(d);
+        return {...t,date,doneDates:t.done?{...(t.doneDates||{}),[date]:true}:(t.doneDates||{})};
+      }
+      return t;
+    });
+    s.dailyHabits.forEach(h => {
+      const doneDates = {};
+      h.done.forEach((done,i) => { if(done){const d=new Date(start);d.setDate(d.getDate()+i);doneDates[dateKey(d)]=true;} });
+      s.tasks.push({id:h.id||("legacy-"+Math.random().toString(36).slice(2)),title:h.name||"Задача",repeatDaily:true,doneDates});
+    });
+    s.dailyHabits = [];
+    s.unifiedTasksV1 = true;
+  }
+  s.tasks = s.tasks.map(t => ({...t,doneDates:t.doneDates&&typeof t.doneDates==="object"?t.doneDates:{}}));
   return s;
 }
 
@@ -116,8 +136,17 @@ function applyTheme() {
   if (themeMeta) themeMeta.content = bg;
 }
 
+function tasksForDate(date) {
+  return state.tasks.filter(t => !t.archived && (t.repeatDaily || t.date === date));
+}
+function taskIsDone(task,date) {
+  return Boolean(task.doneDates?.[date] ?? (!task.date && !task.repeatDaily && task.done));
+}
 function dayTasks(day) {
-  return state.tasks.filter(t => t.day === day && !t.archived);
+  return tasksForDate(dateKey(dateFor(day)));
+}
+function weekStartKey(date) {
+  return dateKey(monday(new Date(date+"T12:00:00")));
 }
 function weekKey(offset = 0) {
   const d = new Date(weekStart);
@@ -163,17 +192,16 @@ function progress(n) {
 }
 
 function home(v) {
- const td=(today.getDay()+6)%7, h=state.dailyHabits.filter(x=>x.done[td]).length, total=state.dailyHabits.length;
+ const td=(today.getDay()+6)%7, todayKey=dateKey(today), todays=tasksForDate(todayKey), done=todays.filter(t=>taskIsDone(t,todayKey)).length;
  const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), wh=state.weeklyHabits||[], homeWeekKey=weekKey(0);
- v.innerHTML=section("Главная","Твоё уютное пространство ♡")+
- `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки сегодня</div><div class="big">${h} из ${total}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
- <div class="card"><div class="row between"><h3>♡ Мои привычки на сегодня</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x=>habitRow(x,td)).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
- <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini icon-edit" data-go="habits" aria-label="Изменить привычки и дела" title="Изменить">✎</button></div>
+ v.innerHTML=section("Сегодня","Твоё уютное пространство ♡")+
+ `<div class="card home-progress"><div class="row between"><div><div class="muted">Задачи сегодня</div><div class="big">${done} из ${todays.length}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(done,todays.length,"выполнено сегодня")}</div></div>
+ <div class="card"><div class="row between"><h3>♡ Мои задачи на сегодня</h3></div>${taskList(todays,todayKey)}<button class="primary" data-add="task" data-add-day="${todayKey}">＋ Добавить задачу на сегодня</button></div>
+ <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini icon-edit" data-go="habits" aria-label="Изменить дела на неделю" title="Изменить">✎</button></div>
  ${wh.map(x=>weeklyHabitRow(x,homeWeekKey)).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
  <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
- ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
- <div class="quick-add"><button class="ghost" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button></div>`;
+ ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>`;
 }
 
 
@@ -204,15 +232,15 @@ function settingsView(v) {
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
-    <div class="card"><div class="row between"><h3>Редактирование привычек</h3><button class="mini" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
-    <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    <div class="card"><div class="row between"><h3>Мои задачи</h3><button class="mini" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить</button></div>
+    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
+    <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
 
 function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
-    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
+    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Задачи и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
 }
 
 function dayPicker() {
@@ -224,14 +252,11 @@ function dayPicker() {
   ).join("")}</div>`;
 }
 
-function habitRow(h,day) {
-  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button></div>`;
-}
-
-function taskList(items) {
-  return items.length ? items.map(t =>
-    `<div class="item ${t.done?"done":""}"><button class="check ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`
-  ).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
+function taskList(items,date) {
+  return items.length ? items.map(t => {
+    const done=taskIsDone(t,date);
+    return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-task="${t.id}" data-task-date="${date}" aria-label="${done?"Отметить невыполненной":"Отметить выполненной"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`;
+  }).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
 }
 
 function orderedDays(){return Array.from({length:7},(_,k)=>(selectedDay+k)%7);}
@@ -240,8 +265,8 @@ function weekTaskChart(key){
  const weeklyDoneCount=weekly.filter(h=>weeklyDone(h,key)).length;
  const weeklyPct=pct(weeklyDoneCount,weekly.length);
  const days=Array.from({length:7},(_,i)=>{
-  const items=state.tasks.filter(t=>Number(t.day)===i&&!t.archived);
-  const done=items.filter(t=>t.done).length;
+  const date=dateKey(dateFor(i)),items=tasksForDate(date);
+  const done=items.filter(t=>taskIsDone(t,date)).length;
   return {label:DAYS[i],done,total:items.length,value:pct(done,items.length)};
  });
  return `<div class="card week-progress-card"><div class="row between"><h3>◔ Прогресс недели</h3><span class="muted">${days.reduce((n,d)=>n+d.done,0)}/${days.reduce((n,d)=>n+d.total,0)} ежедневных</span></div>
@@ -257,7 +282,7 @@ function week(v){
  <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
  <div class="card"><div class="row between"><h3>✿ Дела на всю неделю</h3><span class="muted">${weekly.filter(x=>weeklyDone(x,selectedWeekKey)).length}/${weekly.length}</span></div>${weekly.map(x=>weeklyHabitRow(x,selectedWeekKey)).join("")||'<div class="empty">Добавь дело на всю неделю ♡</div>'}<button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  ${weekTaskChart(selectedWeekKey)}
- <div class="week-stack">${order.map(i=>{const items=dayTasks(i),done=items.filter(t=>t.done).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items)}<button class="mini" data-add="task" data-add-day="${i}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
+ <div class="week-stack">${order.map(i=>{const items=dayTasks(i),date=dateKey(dateFor(i)),done=items.filter(t=>taskIsDone(t,date)).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items,dateKey(dateFor(i)))}<button class="mini" data-add="task" data-add-day="${dateKey(dateFor(i))}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
 }
 
 function diary(v) {
@@ -267,38 +292,99 @@ function diary(v) {
     ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
 }
 
+function orthodoxEaster(year) {
+  const a=year%4,b=year%7,c=year%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7;
+  const month=Math.floor((d+e+114)/31),day=(d+e+114)%31+1;
+  const julian=new Date(year,month-1,day+13,12);
+  return dateKey(julian);
+}
+function holidaysForDate(key) {
+  const md=key.slice(5),year=Number(key.slice(0,4)),items=[];
+  const ru={"01-01":"Новый год","01-02":"Новогодние каникулы","01-03":"Новогодние каникулы","01-04":"Новогодние каникулы","01-05":"Новогодние каникулы","01-06":"Новогодние каникулы","01-07":"Рождество Христово","01-08":"Новогодние каникулы","02-23":"День защитника Отечества","03-08":"Международный женский день","05-01":"Праздник Весны и Труда","05-09":"День Победы","06-12":"День России","11-04":"День народного единства"};
+  if(ru[md])items.push({title:ru[md],source:"Россия"});
+  if(md==="05-11")items.push({title:"День Донецкой Народной Республики",source:"ДНР"});
+  if(md==="09-30")items.push({title:"День возвращения ДНР в Россию",source:"ДНР"});
+  const easter=orthodoxEaster(year);
+  if(key===easter)items.push({title:"Светлое Христово Воскресение (Пасха)",source:"ДНР"});
+  const trinity=new Date(easter+"T12:00:00");trinity.setDate(trinity.getDate()+49);
+  if(key===dateKey(trinity))items.push({title:"День Святой Троицы",source:"ДНР"});
+  return items;
+}
+function unusualHolidayUrl(d) {
+  const month=d.toLocaleDateString("en-US",{month:"long"}).toLowerCase();
+  return "https://www.daysoftheyear.com/days/"+month+"-"+d.getDate()+"/";
+}
+function holidayTodayCard() {
+  const key=dateKey(today),items=holidaysForDate(key),url=unusualHolidayUrl(today);
+  if(items.length)return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${x.source}</span></p>`).join("")}</div>`;
+  return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3><p id="unusualHolidayText" class="muted">Ищем необычный праздник дня…</p><a href="${url}" target="_blank" rel="noopener">Посмотреть необычные праздники дня</a></div>`;
+}
+function fallbackUnusualHoliday(d) {
+  const md=dateKey(d).slice(5);
+  const list={
+    "01-16":"Международный день горячей и острой пищи",
+    "02-17":"День спонтанного проявления доброты",
+    "03-14":"Международный день числа π",
+    "05-25":"День полотенца и День гиков",
+    "06-21":"Всемирный день музыки",
+    "07-17":"Всемирный день эмодзи",
+    "08-19":"Всемирный день фотографии",
+    "10-04":"Всемирный день животных",
+    "11-19":"Всемирный день туалета и Международный мужской день",
+    "12-21":"Всемирный день сноуборда"
+  };
+  const thirdThursdayNovember=d.getMonth()===10&&d.getDay()===4&&Math.ceil(d.getDate()/7)===3;
+  return thirdThursdayNovember?"Всемирный день философии":(list[md]||"");
+}
+function loadUnusualHoliday() {
+  const node=$("#unusualHolidayText");if(!node)return;
+  const url=unusualHolidayUrl(today),fallback=fallbackUnusualHoliday(today);
+  fetch(url,{mode:"cors"}).then(r=>{if(!r.ok)throw new Error("Holiday page unavailable");return r.text();})
+    .then(html=>{const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("main h1, article h1, h1")?.textContent?.trim();if(title&&title.length<140&&!/days of the year/i.test(title))node.textContent=title;else node.textContent=fallback||"Сегодня можно выбрать необычный праздник на сайте Days of the Year.";})
+    .catch(()=>{if(node.isConnected)node.textContent=fallback||"Сегодня необычный праздник можно посмотреть по ссылке ниже ♡";});
+}
 function calendar(v){
   const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
   const year = month.getFullYear(), monthIndex = month.getMonth();
   const monthName = month.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
-  const firstOffset = (month.getDay()+6)%7;
-  const daysInMonth = new Date(year,monthIndex+1,0).getDate();
+  const firstOffset = (month.getDay()+6)%7, daysInMonth = new Date(year,monthIndex+1,0).getDate();
   const cells = Array.from({length:Math.ceil((firstOffset+daysInMonth)/7)*7},(_,i)=>{
     const dayNum=i-firstOffset+1;
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
-    const d=new Date(year,monthIndex,dayNum), key=dateKey(d);
-    const entries=(state.calendarEntries||[]).filter(x=>x.date===key);
-    const isToday=key===dateKey(today), selected=key===selectedCalendarDate;
-    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join("")}</small>` :""}</button>`;
+    const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(state.calendarEntries||[]).filter(x=>x.date===key);
+    const isToday=key===dateKey(today),selected=key===selectedCalendarDate;
+    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨").join(""))}</small>`:""}</button>`;
   }).join("");
-  const selected = new Date(selectedCalendarDate+"T12:00:00");
-  const selectedLabel = selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const selected=new Date(selectedCalendarDate+"T12:00:00");
+  const selectedLabel=selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const entries=(state.calendarEntries||[]).filter(x=>x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
-  const types={birthday:"🎂 День рождения",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
+  const types={birthday:"🎂 Личный праздник",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
+  const doneTasks=tasksForDate(selectedCalendarDate).filter(t=>taskIsDone(t,selectedCalendarDate));
+  const weekDone=(state.weeklyHabits||[]).filter(h=>weeklyDone(h,weekStartKey(selectedCalendarDate)));
+  const cycle=state.cycle||{},log=(cycle.logs||{})[selectedCalendarDate]||{};
+  const period=(cycle.periods||[]).find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
+  const hasCycle=Boolean(period||Object.values(log).some(x=>Array.isArray(x)?x.length:x));
+  const painScale={"Нет":0,"Лёгкая":1,"Умеренная":2,"Сильная":3},bleedScale={"Нет":0,"Мажущие":1,"Слабые":2,"Умеренные":3,"Обильные":4};
+  const painValue=painScale[log.pain]||0,bleedValue=bleedScale[log.bleeding]||0;
+  const cycleCard=hasCycle?`<div class="card"><h3>🌸 Цикл и самочувствие за этот день</h3><div class="day-cycle-graph">${log.pain?`<div><span>Боль</span><i><b style="width:${painValue/3*100}%"></b></i></div>`:""}${log.bleeding?`<div><span>Выделения</span><i><b style="width:${bleedValue/4*100}%"></b></i></div>`:""}</div>${period?`<p><b>Менструация</b> · день ${Math.max(1,Math.floor((new Date(selectedCalendarDate+"T12:00:00")-new Date(period.start+"T12:00:00"))/86400000)+1)}</p>`:""}${log.pain?`<p>Боль: <b>${escapeHtml(log.pain)}</b></p>`:""}${log.bleeding?`<p>Выделения: <b>${escapeHtml(log.bleeding)}</b></p>`:""}${log.mood?`<p>Настроение: <b>${escapeHtml(log.mood)}</b></p>`:""}${log.symptoms?.length?`<p>Симптомы: ${escapeHtml(log.symptoms.join(", "))}</p>`:""}${log.notes?`<p>${escapeHtml(log.notes)}</p>`:""}</div>`:"";
   v.innerHTML=section("Календарь","Месяц целиком — выбирай день и сохраняй важное ♡")+
     `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
-    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ События</span></div></div>
-    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">События и заметки этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
-    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день пока нет событий или заметок ♡</div>'}</div>`;
+    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ Личные события</span></div></div>
+    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Сначала твои личные праздники и события</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
+    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день нет личных праздников или событий ♡</div>'}</div>
+    ${holidayTodayCard()}
+    <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
+    <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
+    ${cycleCard}`;
+  loadUnusualHoliday();
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
-  v.innerHTML=section("Мои привычки","Ежедневные ритуалы и дела на всю неделю ♡")+
-    `<div class="card"><div class="row between"><h3>♡ Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
-    <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
-    <div class="card"><h3>Отметки ежедневных привычек</h3>${state.dailyHabits.map(h=>`<div class="habitweek"><b>${escapeHtml(h.name)}</b><div class="habitdays">${DAYS.map((d,i)=>`<button class="check ${h.done[i]?"on":""}" data-habit="${h.id}" data-day="${i}">${h.done[i]?"✓":d[0]}</button>`).join("")}</div></div>`).join("")}</div>`;
+  v.innerHTML=section("Задачи","Общий список задач для разделов «Сегодня» и «Неделя» ♡")+
+    `<div class="card"><div class="row between"><h3>Мои задачи</h3><button class="primary" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить задачу</button></div>
+    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь первую задачу ♡</div>'}</div>
+    <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить дело</button></div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>`;
 }
 
 function notes(v) {
@@ -319,28 +405,28 @@ function donut(done,total,label) {
 
 function stats(v) {
   const tasks = state.tasks.filter(t => !t.archived);
-  const taskDone = tasks.filter(t => t.done).length;
-  const habitTotal = state.dailyHabits.length * 7;
-  const habitDone = state.dailyHabits.reduce((n,h) => n + h.done.filter(Boolean).length,0);
+  const currentWeekDates=Array.from({length:7},(_,i)=>{const d=new Date(monday(today));d.setDate(d.getDate()+i);return dateKey(d);});
+  const taskDone=tasks.reduce((n,t)=>n+currentWeekDates.filter(d=>taskIsDone(t,d)&& (t.repeatDaily||t.date===d)).length,0);
+  const taskTotal=tasks.reduce((n,t)=>n+currentWeekDates.filter(d=>t.repeatDaily||t.date===d).length,0);
   v.innerHTML = section("Мой прогресс","Каждый маленький шаг имеет значение") +
-    `<div class="card"><h3>Выполнение задач</h3><div class="progress-charts">${donut(taskDone,tasks.length,"Задачи")}</div></div>
-    <div class="card"><h3>Привычки за неделю</h3><div class="progress-charts">${donut(habitDone,habitTotal,"Привычки")}</div></div>
-    <div class="card"><div class="row between"><span>Выполнено задач</span><b>${taskDone} из ${tasks.length}</b></div>${progress(pct(taskDone,tasks.length))}</div>`;
+    `<div class="card"><h3>Выполнение задач</h3><div class="progress-charts">${donut(taskDone,taskTotal,"Задачи за неделю")}</div></div>
+    
+    <div class="card"><div class="row between"><span>Выполнено задач</span><b>${taskDone} из ${taskTotal}</b></div>${progress(pct(taskDone,taskTotal))}</div>`;
 }
 
 function openEditor(type,item = {}) {
-  editing = {type,id:item.id,day:item.day};
+  editing = {type,id:item.id,day:item.day,date:item.date};
   const form = $("#editForm");
   form.innerHTML = "";
   const fields = {
-    task: `<label>Название задачи<input name="title" required value="${escapeHtml(item.title || "")}"></label><label>День<select name="day">${DAYS.map((d,i) => `<option value="${i}" ${Number(item.day ?? selectedDay)===i?"selected":""}>${d}</option>`).join("")}</select></label>`,
-    habit: `<label>Название привычки<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
+    task: `<label>Название задачи<input name="title" required value="${escapeHtml(item.title || "")}"></label><label>Дата<input name="date" type="date" required value="${escapeHtml(item.date || dateKey(today))}"></label><label class="editor-repeat"><input name="repeatDaily" type="checkbox" value="yes" ${item.repeatDaily?"checked":""}> Повторять каждый день</label>`,
     weeklyHabit: `<label>Дело на неделю<input name="name" required value="${escapeHtml(item.name || "")}"></label>`,
     note: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Текст<textarea name="text" rows="5">${escapeHtml(item.text || "")}</textarea></label>`,
     diary: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Запись<textarea name="text" rows="7" required>${escapeHtml(item.text || "")}</textarea></label>`,
     calendarEntry: `<label>Что отмечаем?<select name="kind">${[["birthday","🎂 День рождения"],["anniversary","💞 Годовщина"],["reminder","📌 Напоминание"],["appointment","🩺 Встреча / запись"],["holiday","🎉 Праздник"],["trip","✈️ Поездка"],["other","✿ Другое"]].map(([v,l])=>`<option value="${v}" ${(item.kind||"reminder")===v?"selected":""}>${l}</option>`).join("")}</select></label><label>Название<input name="title" required maxlength="100" value="${escapeHtml(item.title||"")}"></label><label>Заметка<textarea name="note" rows="4">${escapeHtml(item.note||"")}</textarea></label><label>Дата<input type="date" name="date" required value="${escapeHtml(item.date||selectedCalendarDate)}"></label>`
   };
-  form.innerHTML = (fields[type] || "") + `<div class="form-actions"><button type="button" class="ghost" id="cancelEdit">Отмена</button><button type="submit" class="primary" id="saveEdit">Сохранить</button></div>`;
+  const canDelete=Boolean(item.id)&&(type==="task"||type==="weeklyHabit");
+  form.innerHTML = (fields[type] || "") + `<div class="form-actions">${canDelete?'<button type="button" class="ghost danger" id="deleteEditing">Удалить</button>':""}<button type="button" class="ghost" id="cancelEdit">Отмена</button><button type="submit" class="primary" id="saveEdit">Сохранить</button></div>`;
   $("#editDialog").showModal();
 }
 
@@ -359,8 +445,7 @@ function newId() {
 }
 
 function handleAdd(type,day = selectedDay) {
-  if (type === "task") openEditor("task",{day});
-  else if (type === "habit") openEditor("habit");
+  if (type === "task") openEditor("task",{date:typeof day==="string"?day:dateKey(dateFor(day))});
   else if (type === "weeklyHabit") openEditor("weeklyHabit");
   else if (type === "note") openEditor("note",{day});
   else if (type === "diary") openEditor("diary");
@@ -416,7 +501,7 @@ document.addEventListener("click", e => {
   if (b.dataset.editCalendar) { const x=byId(state.calendarEntries,b.dataset.editCalendar); if(x)openEditor("calendarEntry",x); return; }
   if (b.dataset.deleteCalendar) { state.calendarEntries=state.calendarEntries.filter(x=>String(x.id)!==b.dataset.deleteCalendar); save(); render(); return; }
 
-  if (b.dataset.day !== undefined && !b.dataset.habit) {
+  if (b.dataset.day !== undefined) {
     selectedDay = Number(b.dataset.day);
     render();
     return;
@@ -429,13 +514,18 @@ document.addEventListener("click", e => {
   }
 
   if (b.dataset.add) {
-    handleAdd(b.dataset.add, Number(b.dataset.addDay ?? selectedDay));
+    const addDay=b.dataset.addDay??selectedDay;
+    handleAdd(b.dataset.add, /^\d{4}-\d{2}-\d{2}$/.test(String(addDay))?String(addDay):Number(addDay));
     return;
   }
 
-  if (b.id === "cancelEdit") {
-    closeEditor();
-    return;
+  if (b.id === "cancelEdit") { closeEditor(); return; }
+  if (b.id === "deleteEditing" && editing?.id) {
+    const {type,id}=editing;
+    if (!confirm("Удалить эту запись?")) return;
+    if(type==="task") state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));
+    if(type==="weeklyHabit") state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==String(id));
+    save();closeEditor();render();return;
   }
 
   if (b.dataset.weeklyHabit) {
@@ -449,36 +539,15 @@ document.addEventListener("click", e => {
     return;
   }
   if (b.dataset.editWeeklyHabit) { const h=byId(state.weeklyHabits,b.dataset.editWeeklyHabit); if(h)openEditor("weeklyHabit",h); return; }
-  if (b.dataset.habit) {
-    const h = byId(state.dailyHabits,b.dataset.habit);
-    const day = Number(b.dataset.day ?? selectedDay);
-    if (h) {
-      h.done[day] = !h.done[day];
-      save();
-      render();
-    }
-    return;
-  }
-
   if (b.dataset.task) {
-    const t = byId(state.tasks,b.dataset.task);
-    if (t) {
-      t.done = !t.done;
-      save();
-      render();
-    }
+    const t=byId(state.tasks,b.dataset.task),date=b.dataset.taskDate||dateKey(today);
+    if(t){t.doneDates=t.doneDates&&typeof t.doneDates==="object"?t.doneDates:{};t.doneDates[date]=!taskIsDone(t,date);save();render();}
     return;
   }
 
   if (b.dataset.editTask) {
     const t = byId(state.tasks,b.dataset.editTask);
     if (t) openEditor("task",t);
-    return;
-  }
-
-  if (b.dataset.editHabit) {
-    const h = byId(state.dailyHabits,b.dataset.editHabit);
-    if (h) openEditor("habit",h);
     return;
   }
 
@@ -503,12 +572,6 @@ document.addEventListener("click", e => {
   }
 
   if (b.dataset.deleteWeeklyHabit) { state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==b.dataset.deleteWeeklyHabit); save(); render(); return; }
-  if (b.dataset.deleteHabit) {
-    state.dailyHabits = state.dailyHabits.filter(x => String(x.id) !== b.dataset.deleteHabit);
-    save();
-    render();
-    return;
-  }
 
   if (b.dataset.deleteNote) {
     state.notes = state.notes.filter(x => String(x.id) !== b.dataset.deleteNote);
@@ -570,36 +633,15 @@ document.addEventListener("submit", e => {
   const {type,id} = editing;
 
   if (type === "task") {
-    if (id) {
-      const t = byId(state.tasks,id);
-      if (t) Object.assign(t,values,{day:Number(values.day)});
-    } else {
-      state.tasks.push({
-        id:newId(),
-        title:values.title,
-        day:Number(values.day),
-        done:false
-      });
-    }
+    const date=values.date||dateKey(today),repeatDaily=values.repeatDaily==="yes";
+    if(id){const t=byId(state.tasks,id);if(t){t.title=values.title;t.repeatDaily=repeatDaily;if(!repeatDaily)t.date=date;else delete t.date;}}
+    else state.tasks.push({id:newId(),title:values.title,date,repeatDaily,doneDates:{}});
   }
 
   if (type === "weeklyHabit") {
     state.weeklyHabits=Array.isArray(state.weeklyHabits)?state.weeklyHabits:[];
     if(id){const h=byId(state.weeklyHabits,id);if(h)h.name=values.name;}
-    else state.weeklyHabits.push({id:newId(),name:values.name,done:false,frequency:"weekly"});
-  }
-
-  if (type === "habit") {
-    if (id) {
-      const h = byId(state.dailyHabits,id);
-      if (h) h.name = values.name;
-    } else {
-      state.dailyHabits.push({
-        id:newId(),
-        name:values.name,
-        done:Array(7).fill(false)
-      });
-    }
+    else state.weeklyHabits.push({id:newId(),name:values.name,done:false,doneWeeks:{},frequency:"weekly"});
   }
 
   if (type === "diary") {
