@@ -303,45 +303,48 @@ function holidaysForDate(key) {
   const ru={"01-01":"Новый год","01-02":"Новогодние каникулы","01-03":"Новогодние каникулы","01-04":"Новогодние каникулы","01-05":"Новогодние каникулы","01-06":"Новогодние каникулы","01-07":"Рождество Христово","01-08":"Новогодние каникулы","02-23":"День защитника Отечества","03-08":"Международный женский день","05-01":"Праздник Весны и Труда","05-09":"День Победы","06-12":"День России","11-04":"День народного единства"};
   if(ru[md])items.push({title:ru[md],source:"Россия"});
   if(md==="05-11")items.push({title:"День Донецкой Народной Республики",source:"ДНР"});
-  if(md==="09-30")items.push({title:"День возвращения ДНР в Россию",source:"ДНР"});
+  if(md==="09-30")items.push({title:"День воссоединения ДНР с Россией",source:"ДНР"});
   const easter=orthodoxEaster(year);
-  if(key===easter)items.push({title:"Светлое Христово Воскресение (Пасха)",source:"ДНР"});
+  if(key===easter)items.push({title:"Светлое Христово Воскресение (Пасха)",source:"Россия и ДНР"});
   const trinity=new Date(easter+"T12:00:00");trinity.setDate(trinity.getDate()+49);
-  if(key===dateKey(trinity))items.push({title:"День Святой Троицы",source:"ДНР"});
+  if(key===dateKey(trinity))items.push({title:"День Святой Троицы",source:"Россия и ДНР"});
   return items;
 }
-function unusualHolidayUrl(d) {
-  const month=d.toLocaleDateString("en-US",{month:"long"}).toLowerCase();
-  return "https://www.daysoftheyear.com/days/"+month+"-"+d.getDate()+"/";
-}
-function holidayTodayCard() {
-  const key=dateKey(today),items=holidaysForDate(key),url=unusualHolidayUrl(today);
-  if(items.length)return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${x.source}</span></p>`).join("")}</div>`;
-  return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3><p id="unusualHolidayText" class="muted">Ищем необычный праздник дня…</p><a href="${url}" target="_blank" rel="noopener">Посмотреть необычные праздники дня</a></div>`;
-}
-function fallbackUnusualHoliday(d) {
-  const md=dateKey(d).slice(5);
+function fallbackUnusualHoliday(key) {
+  const md=key.slice(5);
   const list={
-    "01-16":"Международный день горячей и острой пищи",
+    "01-16":"Всемирный день The Beatles",
+    "01-21":"Международный день объятий",
+    "02-14":"День всех влюблённых",
     "02-17":"День спонтанного проявления доброты",
     "03-14":"Международный день числа π",
+    "03-20":"Международный день счастья",
+    "04-01":"День смеха",
+    "04-12":"День космонавтики",
     "05-25":"День полотенца и День гиков",
+    "06-01":"Международный день защиты детей",
     "06-21":"Всемирный день музыки",
     "07-17":"Всемирный день эмодзи",
     "08-19":"Всемирный день фотографии",
+    "09-21":"Международный день мира",
     "10-04":"Всемирный день животных",
+    "10-31":"Хэллоуин",
     "11-19":"Всемирный день туалета и Международный мужской день",
+    "11-21":"Всемирный день телевидения",
     "12-21":"Всемирный день сноуборда"
   };
+  const d=new Date(key+"T12:00:00");
   const thirdThursdayNovember=d.getMonth()===10&&d.getDay()===4&&Math.ceil(d.getDate()/7)===3;
   return thirdThursdayNovember?"Всемирный день философии":(list[md]||"");
 }
-function loadUnusualHoliday() {
-  const node=$("#unusualHolidayText");if(!node)return;
-  const url=unusualHolidayUrl(today),fallback=fallbackUnusualHoliday(today);
-  fetch(url,{mode:"cors"}).then(r=>{if(!r.ok)throw new Error("Holiday page unavailable");return r.text();})
-    .then(html=>{const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("main h1, article h1, h1")?.textContent?.trim();if(title&&title.length<140&&!/days of the year/i.test(title))node.textContent=title;else node.textContent=fallback||"Сегодня можно выбрать необычный праздник на сайте Days of the Year.";})
-    .catch(()=>{if(node.isConnected)node.textContent=fallback||"Сегодня необычный праздник можно посмотреть по ссылке ниже ♡";});
+function holidayForDateCard(key) {
+  const items=holidaysForDate(key);
+  const selected=new Date(key+"T12:00:00");
+  const isToday=key===dateKey(today);
+  const heading=isToday?"🎉 Праздник сегодня":"🎉 Праздники на выбранную дату";
+  if(items.length)return `<div class="card holiday-card"><h3>${heading}</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${escapeHtml(x.source)}</span></p>`).join("")}</div>`;
+  const unusual=fallbackUnusualHoliday(key);
+  return `<div class="card holiday-card"><h3>${heading}</h3><p><b>${unusual?escapeHtml(unusual):"Необычный праздник для этой даты пока не добавлен"}</b></p><p class="muted">${selected.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})} · ${unusual?"Необычная дата":"Список праздников хранится в планере и доступен без интернета"}</p></div>`;
 }
 function calendar(v){
   const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
@@ -372,11 +375,10 @@ function calendar(v){
     <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ Личные события</span></div></div>
     <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Сначала твои личные праздники и события</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
     ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день нет личных праздников или событий ♡</div>'}</div>
-    ${holidayTodayCard()}
+    ${holidayForDateCard(selectedCalendarDate)}
     <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
     <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
     ${cycleCard}`;
-  loadUnusualHoliday();
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
