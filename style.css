@@ -358,3 +358,14 @@ body.theme-custom dialog{background:var(--card);color:var(--ink)}
 .custom-theme-actions{align-items:flex-end;gap:8px;flex-wrap:wrap;margin:12px 0}
 .custom-theme-actions .muted{flex:1 1 130px}
 @media(max-width:380px){.custom-theme-actions .primary{width:100%}}
+
+/* Контраст заголовков и отметок в новых и пользовательской темах */
+body.theme-mint h1,body.theme-mint h2,body.theme-mint h3,body.theme-rose h1,body.theme-rose h2,body.theme-rose h3,body.theme-sky h1,body.theme-sky h2,body.theme-sky h3,body.theme-graphite h1,body.theme-graphite h2,body.theme-graphite h3{color:var(--ink)}
+body.theme-mint .check,body.theme-rose .check,body.theme-sky .check,body.theme-graphite .check{background:var(--bg);border-color:var(--line)}
+body.theme-mint .check.on,body.theme-rose .check.on,body.theme-sky .check.on,body.theme-graphite .check.on{background:var(--good);border-color:var(--good)}
+body.theme-custom .week-day-card.is-selected{background:var(--soft);border-color:var(--accent)}
+body.theme-custom .cycle-date.actual{background:var(--accent);border-color:var(--accent);color:#fff}
+body.theme-custom .cycle-date.forecast{background:var(--soft);border-color:var(--accent);color:var(--ink)}
+body.theme-custom .cycle-dot{background:var(--accent)}
+body.theme-custom .cycle-dot.forecast{background:var(--soft);border-color:var(--accent)}
+body.theme-custom .item.done .itemtext{color:var(--muted)}
