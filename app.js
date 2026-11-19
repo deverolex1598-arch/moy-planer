@@ -303,6 +303,7 @@ function settingsView(v) {
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><h3>Стандартные ежедневные дела</h3><p class="muted">Можно добавить дело в ежедневный список или скрыть его. Скрытые дела останутся здесь.</p>
+    <button class="mini" data-restore-standard-daily-tasks="yes">Вернуть все стандартные задачи</button>
     ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}    ${(state.tasks||[]).some(t=>!t.archived&&!t.standardTaskId)?'<button class="mini danger" data-delete-custom-daily-tasks="yes">Удалить все собственные задачи</button>':""}</div>
     ${standardWeeklySettingsHtml()}
     <div class="card"><div class="row between"><h3>Мои дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
@@ -572,6 +573,20 @@ document.addEventListener("click", e => {
     return;
   }
 
+  if (b.dataset.restoreStandardDailyTasks) {
+    (state.standardTasks || []).forEach(item => {
+      item.active = true;
+      let task = (state.tasks || []).find(t => t.standardTaskId === item.id);
+      if (!task) {
+        task = {id:"standard-"+item.id,title:item.title,emoji:item.emoji,repeatDaily:true,standardTaskId:item.id,doneDates:{},excludedDates:{}};
+        state.tasks.push(task);
+      }
+      task.archived = false;
+      task.repeatDaily = true;
+      task.excludedDates = {};
+    });
+    save();render();return;
+  }
   if (b.dataset.toggleStandardTask) {
     const item=(state.standardTasks||[]).find(x=>x.id===b.dataset.toggleStandardTask);
     if(item){item.active=!item.active;if(item.active&&!state.tasks.some(t=>t.standardTaskId===item.id)){state.tasks.push({id:"standard-"+item.id,title:item.title,emoji:item.emoji,repeatDaily:true,standardTaskId:item.id,doneDates:{},excludedDates:{}});}save();render();}
