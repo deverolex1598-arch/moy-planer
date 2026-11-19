@@ -277,3 +277,15 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 .week-weekly-progress{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
 .week-weekly-progress .row{font-size:12px;margin-bottom:8px}
 .week-weekly-progress strong{color:var(--ink)}
+
+
+/* Единый список задач и аккуратные элементы календарной истории */
+.editor-repeat{display:flex;align-items:center;gap:9px;margin:12px 0;color:var(--ink)}
+.editor-repeat input{width:auto;flex:none;accent-color:var(--accent)}
+.form-actions .danger{color:#b65d70;border-color:#e8b9c4}
+.holiday-card p{margin:7px 0}
+.holiday-card a{display:inline-block;margin-top:5px;color:var(--accent);font-size:12px;text-decoration:underline}
+.day-cycle-graph{display:grid;gap:9px;margin:12px 0}
+.day-cycle-graph>div{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.day-cycle-graph i{height:9px;border-radius:10px;background:var(--soft);overflow:hidden}
+.day-cycle-graph i b{display:block;height:100%;border-radius:10px;background:var(--accent)}
