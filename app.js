@@ -47,11 +47,16 @@ function normalizeState(data) {
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
   s.goals = Array.isArray(s.goals) ? s.goals : [];
-  const standardDefaults = [{id:"charge",title:"Зарядка",emoji:"🏃‍♀️"},{id:"water",title:"Выпить воды",emoji:"💧"},{id:"breakfast",title:"Позавтракать",emoji:"🍓"},{id:"fresh-air",title:"Выйти на свежий воздух",emoji:"🚶‍♀️"},{id:"self-care",title:"Уход за собой",emoji:"🧴"},{id:"reading",title:"Почитать",emoji:"📖"}];
+  const standardDefaults = [{id:"charge",title:"Зарядка",emoji:"🏃"},{id:"water",title:"Выпить воды",emoji:"💧"},{id:"breakfast",title:"Позавтракать",emoji:"🍓"},{id:"fresh-air",title:"Выйти на свежий воздух",emoji:"🚶"},{id:"self-care",title:"Уход за собой",emoji:"🧴"},{id:"reading",title:"Почитать",emoji:"📖"},{id:"make-bed",title:"Заправить кровать",emoji:"🛏️"},{id:"brush-teeth",title:"Почистить зубы",emoji:"🪥"},{id:"take-vitamins",title:"Принять витамины",emoji:"💊"},{id:"plan-day",title:"Составить план на день",emoji:"📝"},{id:"tidy-up",title:"Немного прибраться",emoji:"🧹"},{id:"early-sleep",title:"Лечь спать вовремя",emoji:"🌙"}];
   if (!Array.isArray(s.standardTasks)) s.standardTasks = standardDefaults.map(x => ({...x,active:true}));
   s.standardTasks = s.standardTasks.map(x => ({...x,active:x.active !== false}));
   standardDefaults.forEach(template => { if (!s.standardTasks.some(x => x.id === template.id)) s.standardTasks.push({...template,active:true}); });
   s.standardTasks.forEach(template => { if (!s.tasks.some(t => t.standardTaskId === template.id)) s.tasks.push({id:"standard-"+template.id,title:template.title,emoji:template.emoji,repeatDaily:true,standardTaskId:template.id,doneDates:{},excludedDates:{}}); });
+  const standardWeeklyDefaults = [{id:"clean-room",title:"Убраться дома",emoji:"🧹"},{id:"laundry",title:"Постирать вещи",emoji:"🧺"},{id:"change-bedding",title:"Сменить постельное бельё",emoji:"🛏️"},{id:"grocery-shop",title:"Купить продукты",emoji:"🛒"},{id:"workout",title:"Тренировка",emoji:"🏋️"},{id:"plan-week",title:"Спланировать следующую неделю",emoji:"📅"},{id:"budget",title:"Проверить бюджет",emoji:"💳"},{id:"call-family",title:"Позвонить близким",emoji:"📞"}];
+  if (!Array.isArray(s.standardWeeklyTasks)) s.standardWeeklyTasks = standardWeeklyDefaults.map(x => ({...x,active:true}));
+  s.standardWeeklyTasks = s.standardWeeklyTasks.map(x => ({...x,active:x.active !== false}));
+  standardWeeklyDefaults.forEach(template => { if (!s.standardWeeklyTasks.some(x => x.id === template.id)) s.standardWeeklyTasks.push({...template,active:true}); });
+  s.standardWeeklyTasks.forEach(template => { if (template.active && !s.weeklyHabits.some(h => h.standardWeeklyTaskId === template.id)) s.weeklyHabits.push({id:"standard-weekly-"+template.id,name:template.title,emoji:template.emoji,repeatWeekly:true,standardWeeklyTaskId:template.id,doneWeeks:{}}); });
   s.reminder = s.reminder || "20:00";
   s.reminderEnabled = Boolean(s.reminderEnabled);
   s.dailyHabits.forEach(h => {
@@ -197,7 +202,7 @@ function weekKey(offset = 0) {
   return dateKey(d);
 }
 function weeklyDone(h, key) { return Boolean(h.doneWeeks && h.doneWeeks[key]); }
-function weeklyHabitsForWeek(key) { return (state.weeklyHabits || []).filter(h => h.repeatWeekly !== false || h.createdWeek === key); }
+function weeklyHabitsForWeek(key) { return (state.weeklyHabits || []).filter(h => (!h.standardWeeklyTaskId || state.standardWeeklyTasks?.some(x => x.id === h.standardWeeklyTaskId && x.active)) && (h.repeatWeekly !== false || h.createdWeek === key)); }
 function weeklyHabitRow(h, key) {
   const done = weeklyDone(h, key);
   return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${(h.emoji || taskEmoji(h.name))} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button></div>`;
@@ -268,6 +273,10 @@ function care(v) {
     ${notes.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("")||'<div class="empty">Сохраняй здесь мысли, идеи и важные моменты.</div>'}</div>
     <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button></div>`;
 }
+function standardWeeklySettingsHtml() {
+  return `<div class="card"><h3>Стандартные дела на неделю</h3><p class="muted">Добавляй подходящие дела в недельный список или скрывай их. Скрытые останутся здесь.</p>${(state.standardWeeklyTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-weekly-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}</div>`;
+}
+
 function settingsView(v) {
   const themes = ["pink","peach","blue","beige","green","lavender","brown","dark"];
   const labels = ["Розовая","Персиковая","Голубая","Бежевая","Шалфейная","Лавандовая","Шоколадная","Ночная"];
@@ -278,8 +287,9 @@ function settingsView(v) {
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><h3>Стандартные ежедневные дела</h3><p class="muted">Можно добавить дело в ежедневный список или скрыть его. Скрытые дела останутся здесь.</p>
     ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}</div>
-    <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${(h.emoji || taskEmoji(h.name))} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    ${standardWeeklySettingsHtml()}
+    <div class="card"><div class="row between"><h3>Мои дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
+    ${weekly.filter(h=>!h.standardWeeklyTaskId).map(h=>`<div class="item"><span class="itemtext">${h.emoji || taskEmoji(h.name)} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
 
 function more(v) {
@@ -550,6 +560,11 @@ document.addEventListener("click", e => {
     if(item){item.active=!item.active;if(item.active&&!state.tasks.some(t=>t.standardTaskId===item.id)){state.tasks.push({id:"standard-"+item.id,title:item.title,emoji:item.emoji,repeatDaily:true,standardTaskId:item.id,doneDates:{},excludedDates:{}});}save();render();}
     return;
   }
+  if (b.dataset.toggleStandardWeeklyTask) {
+    const item=(state.standardWeeklyTasks||[]).find(x=>x.id===b.dataset.toggleStandardWeeklyTask);
+    if(item){item.active=!item.active;if(item.active&&!state.weeklyHabits.some(h=>h.standardWeeklyTaskId===item.id)){state.weeklyHabits.push({id:"standard-weekly-"+item.id,name:item.title,emoji:item.emoji,repeatWeekly:true,standardWeeklyTaskId:item.id,doneWeeks:{}});}save();render();}
+    return;
+  }
   if (b.dataset.deleteTodayTasks) {
     if (!confirm("Удалить все задачи за сегодня? Повторяющиеся задачи скроются только на сегодня и появятся снова завтра.")) return;
     const day=dateKey(today);
@@ -609,7 +624,7 @@ document.addEventListener("click", e => {
     const {type,id}=editing;
     if (!confirm("Удалить эту запись?")) return;
     if(type==="task"){const task=byId(state.tasks,id);if(task?.standardTaskId){const standard=(state.standardTasks||[]).find(x=>x.id===task.standardTaskId);if(standard)standard.active=false;state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));}else state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));}
-    if(type==="weeklyHabit") state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==String(id));
+    if(type==="weeklyHabit"){const h=byId(state.weeklyHabits,id);if(h?.standardWeeklyTaskId){const standard=(state.standardWeeklyTasks||[]).find(x=>x.id===h.standardWeeklyTaskId);if(standard)standard.active=false;}state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==String(id));}
     save();closeEditor();render();return;
   }
 
