@@ -127,7 +127,7 @@ function weekKey(offset = 0) {
 function weeklyDone(h, key) { return Boolean(h.doneWeeks && h.doneWeeks[key]); }
 function weeklyHabitRow(h, key) {
   const done = weeklyDone(h, key);
-  return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">Изменить</button></div>`;
+  return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button></div>`;
 }
 
 function pct(done,total) {
@@ -168,11 +168,11 @@ function home(v) {
  v.innerHTML=section("Главная","Твоё уютное пространство ♡")+
  `<div class="card home-progress"><div class="row between"><div><div class="muted">Привычки сегодня</div><div class="big">${h} из ${total}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(h,total,"выполнено сегодня")}</div></div>
  <div class="card"><div class="row between"><h3>♡ Мои привычки на сегодня</h3><button class="mini" data-go="habits">Все привычки</button></div>${state.dailyHabits.map(x=>habitRow(x,td)).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
- <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini" data-go="habits">Изменить</button></div>
+ <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini icon-edit" data-go="habits" aria-label="Изменить привычки и дела" title="Изменить">✎</button></div>
  ${wh.map(x=>weeklyHabitRow(x,homeWeekKey)).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
  <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
- ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
+ ${ns.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Пусть здесь появится что-то хорошее ♡</div>'}</div>
  <div class="quick-add"><button class="ghost" data-add="task">＋ Задача</button><button class="ghost" data-add="habit">＋ Привычка</button></div>`;
 }
 
@@ -193,8 +193,8 @@ function care(v) {
     <form id="goalForm" class="inputrow"><input name="title" maxlength="120" placeholder="Маленький шаг к цели…" required><button class="primary">＋</button></form>
     ${goals.map(g=>`<div class="item ${g.done?"done":""}"><button class="check ${g.done?"on":""}" data-goal-toggle="${g.id}">${g.done?"✓":""}</button><span class="itemtext">${escapeHtml(g.title)}</span><button class="mini" data-goal-delete="${g.id}">×</button></div>`).join("")||'<div class="empty">Большие цели начинаются с маленьких шагов.</div>'}</div>
     <div class="card care-card"><div class="row between"><h3>Мои заметки</h3><button class="mini" data-add="note" data-add-day="${(today.getDay()+6)%7}">＋ Записать</button></div>
-    ${notes.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini" data-edit-note="${n.id}">Изменить</button><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("")||'<div class="empty">Сохраняй здесь мысли, идеи и важные моменты.</div>'}</div>
-    <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button><button class="ghost" data-go="archive">▣ Архив задач</button></div>`;
+    ${notes.map(n=>`<div class="note-preview"><b>${escapeHtml(n.title||"Заметка")}</b><p>${escapeHtml(n.text)}</p><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("")||'<div class="empty">Сохраняй здесь мысли, идеи и важные моменты.</div>'}</div>
+    <div class="care-shortcuts"><button class="ghost" data-go="stats">◔ Мой прогресс</button></div>`;
 }
 function settingsView(v) {
   const themes = ["pink","peach","blue","beige","green","lavender","brown","dark"];
@@ -205,14 +205,14 @@ function settingsView(v) {
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
     <div class="card"><div class="row between"><h3>Редактирование привычек</h3><button class="mini" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">Изменить</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
+    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
     <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">Изменить</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
 
 function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
-    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="archive">▣ Архив</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
+    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
 }
 
 function dayPicker() {
@@ -225,12 +225,12 @@ function dayPicker() {
 }
 
 function habitRow(h,day) {
-  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">Изменить</button></div>`;
+  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button></div>`;
 }
 
 function taskList(items) {
   return items.length ? items.map(t =>
-    `<div class="item ${t.done?"done":""}"><button class="check ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini" data-edit-task="${t.id}">✎</button><button class="mini" data-archive-task="${t.id}">▣</button></div>`
+    `<div class="item ${t.done?"done":""}"><button class="check ${t.done?"on":""}" data-task="${t.id}">${t.done?"✓":""}</button><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`
   ).join("") : `<div class="empty">Пока нет задач. Добавь первую ♡</div>`;
 }
 
@@ -264,7 +264,7 @@ function diary(v) {
   const entries = state.diaryEntries || [];
   v.innerHTML = section("Дневник","Мысли, события и маленькие открытия ♡") +
     `<div class="card"><div class="row between"><h3>Мои записи</h3><button class="primary" data-add="diary">＋ Новая запись</button></div>
-    ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini" data-edit-diary="${x.id}">Изменить</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
+    ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
 }
 
 function calendar(v){
@@ -289,15 +289,15 @@ function calendar(v){
     `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
     <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ События</span></div></div>
     <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">События и заметки этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
-    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini" data-edit-calendar="${x.id}">Изменить</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день пока нет событий или заметок ♡</div>'}</div>`;
+    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день пока нет событий или заметок ♡</div>'}</div>`;
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
   v.innerHTML=section("Мои привычки","Ежедневные ритуалы и дела на всю неделю ♡")+
     `<div class="card"><div class="row between"><h3>♡ Ежедневные привычки</h3><button class="primary" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
+    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button><button class="mini" data-delete-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь первую привычку ♡</div>'}</div>
     <div class="card"><div class="row between"><h3>✿ Дела на неделю</h3><button class="primary" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-weekly-habit="${h.id}">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">×</button></div>`).join("")||'<div class="empty">Добавь дело, которое нужно выполнить один раз за неделю ♡</div>'}</div>
     <div class="card"><h3>Отметки ежедневных привычек</h3>${state.dailyHabits.map(h=>`<div class="habitweek"><b>${escapeHtml(h.name)}</b><div class="habitdays">${DAYS.map((d,i)=>`<button class="check ${h.done[i]?"on":""}" data-habit="${h.id}" data-day="${i}">${h.done[i]?"✓":d[0]}</button>`).join("")}</div></div>`).join("")}</div>`;
 }
 
@@ -305,7 +305,7 @@ function notes(v) {
   const items = state.notes.filter(n => Number(n.day ?? selectedDay) === selectedDay && !n.archived);
   v.innerHTML = section("Заметки","Выбери день — и увидишь его записи") +
     `<div class="card"><h3>День</h3>${dayPicker()}<button class="primary" data-add="note">＋ Новая заметка</button></div>
-    ${items.map(n => `<div class="card"><div class="row between"><h3>${escapeHtml(n.title || "Без названия")}</h3><button class="mini" data-edit-note="${n.id}">✎</button></div><p>${escapeHtml(n.text)}</p><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("") || `<div class="empty">На ${FULL[selectedDay].toLowerCase()} пока нет заметок ♡</div>`}`;
+    ${items.map(n => `<div class="card"><div class="row between"><h3>${escapeHtml(n.title || "Без названия")}</h3><button class="mini icon-edit" data-edit-note="${n.id}" aria-label="Изменить заметку" title="Изменить">✎</button></div><p>${escapeHtml(n.text)}</p><button class="mini" data-delete-note="${n.id}">Удалить</button></div>`).join("") || `<div class="empty">На ${FULL[selectedDay].toLowerCase()} пока нет заметок ♡</div>`}`;
 }
 function archive(v) {
   v.innerHTML = section("Архив","Завершённые и отложенные задачи") +
