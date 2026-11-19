@@ -327,7 +327,7 @@ function settingsView(v) {
   const menuTabs = [{id:"week",label:"Неделя"},{id:"cycle",label:"Цикл"},{id:"diary",label:"Дневник"},{id:"calendar",label:"Календарь"}];
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
-    <div class="card"><h3>Оформление</h3><p class="muted">Выбери готовую палитру или собери собственную.</p><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div>
+    <div class="card" id="themeSettings"><h3>Оформление</h3><p class="muted">Выбери готовую палитру или собери собственную.</p><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div>
     <div class="custom-theme-panel"><h3>Мои цвета</h3><p class="muted">Настрой фон, карточки, текст и главный цвет кнопок.</p><div class="custom-color-grid">
       <label>Фон страницы<input type="color" data-custom-theme-color="bg" value="${escapeHtml(customTheme.bg||"#fff5f4")}"></label>
       <label>Карточки<input type="color" data-custom-theme-color="card" value="${escapeHtml(customTheme.card||"#fffdfb")}"></label>
@@ -962,6 +962,12 @@ function init() {
 $("#settingsBtn")?.addEventListener("click", () => {
   tab = "settings";
   render();
+});
+
+$("#themeBtn")?.addEventListener("click", () => {
+  tab = "settings";
+  render();
+  $("#themeSettings")?.scrollIntoView({behavior:"smooth",block:"start"});
 });
 
 
