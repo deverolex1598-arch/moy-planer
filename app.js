@@ -252,10 +252,6 @@ function dayPicker() {
   ).join("")}</div>`;
 }
 
-function habitRow(h,day) {
-  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button></div>`;
-}
-
 function taskList(items,date) {
   return items.length ? items.map(t => {
     const done=taskIsDone(t,date);
@@ -323,12 +319,29 @@ function holidayTodayCard() {
   if(items.length)return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${x.source}</span></p>`).join("")}</div>`;
   return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3><p id="unusualHolidayText" class="muted">Ищем необычный праздник дня…</p><a href="${url}" target="_blank" rel="noopener">Посмотреть необычные праздники дня</a></div>`;
 }
+function fallbackUnusualHoliday(d) {
+  const md=dateKey(d).slice(5);
+  const list={
+    "01-16":"Международный день горячей и острой пищи",
+    "02-17":"День спонтанного проявления доброты",
+    "03-14":"Международный день числа π",
+    "05-25":"День полотенца и День гиков",
+    "06-21":"Всемирный день музыки",
+    "07-17":"Всемирный день эмодзи",
+    "08-19":"Всемирный день фотографии",
+    "10-04":"Всемирный день животных",
+    "11-19":"Всемирный день туалета и Международный мужской день",
+    "12-21":"Всемирный день сноуборда"
+  };
+  const thirdThursdayNovember=d.getMonth()===10&&d.getDay()===4&&Math.ceil(d.getDate()/7)===3;
+  return thirdThursdayNovember?"Всемирный день философии":(list[md]||"");
+}
 function loadUnusualHoliday() {
   const node=$("#unusualHolidayText");if(!node)return;
-  const url=unusualHolidayUrl(today);
+  const url=unusualHolidayUrl(today),fallback=fallbackUnusualHoliday(today);
   fetch(url,{mode:"cors"}).then(r=>{if(!r.ok)throw new Error("Holiday page unavailable");return r.text();})
-    .then(html=>{const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector("main h1, article h1, h1")?.textContent?.trim();if(title&&title.length<140)node.textContent=title;else node.textContent="Сегодня можно выбрать необычный праздник на сайте Days of the Year.";})
-    .catch(()=>{if(node.isConnected)node.textContent="Сегодня необычный праздник можно посмотреть по ссылке ниже ♡";});
+    .then(html=>{const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("main h1, article h1, h1")?.textContent?.trim();if(title&&title.length<140&&!/days of the year/i.test(title))node.textContent=title;else node.textContent=fallback||"Сегодня можно выбрать необычный праздник на сайте Days of the Year.";})
+    .catch(()=>{if(node.isConnected)node.textContent=fallback||"Сегодня необычный праздник можно посмотреть по ссылке ниже ♡";});
 }
 function calendar(v){
   const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
@@ -488,7 +501,7 @@ document.addEventListener("click", e => {
   if (b.dataset.editCalendar) { const x=byId(state.calendarEntries,b.dataset.editCalendar); if(x)openEditor("calendarEntry",x); return; }
   if (b.dataset.deleteCalendar) { state.calendarEntries=state.calendarEntries.filter(x=>String(x.id)!==b.dataset.deleteCalendar); save(); render(); return; }
 
-  if (b.dataset.day !== undefined && !b.dataset.habit) {
+  if (b.dataset.day !== undefined) {
     selectedDay = Number(b.dataset.day);
     render();
     return;
@@ -628,7 +641,7 @@ document.addEventListener("submit", e => {
   if (type === "weeklyHabit") {
     state.weeklyHabits=Array.isArray(state.weeklyHabits)?state.weeklyHabits:[];
     if(id){const h=byId(state.weeklyHabits,id);if(h)h.name=values.name;}
-    else state.weeklyHabits.push({id:newId(),name:values.name,done:false,frequency:"weekly"});
+    else state.weeklyHabits.push({id:newId(),name:values.name,done:false,doneWeeks:{},frequency:"weekly"});
   }
 
   if (type === "diary") {
