@@ -47,6 +47,11 @@ function normalizeState(data) {
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
   s.goals = Array.isArray(s.goals) ? s.goals : [];
+  const standardDefaults = [{id:"charge",title:"Зарядка",emoji:"🏃‍♀️"},{id:"water",title:"Выпить воды",emoji:"💧"},{id:"breakfast",title:"Позавтракать",emoji:"🍓"},{id:"fresh-air",title:"Выйти на свежий воздух",emoji:"🚶‍♀️"},{id:"self-care",title:"Уход за собой",emoji:"🧴"},{id:"reading",title:"Почитать",emoji:"📖"}];
+  if (!Array.isArray(s.standardTasks)) s.standardTasks = standardDefaults.map(x => ({...x,active:true}));
+  s.standardTasks = s.standardTasks.map(x => ({...x,active:x.active !== false}));
+  standardDefaults.forEach(template => { if (!s.standardTasks.some(x => x.id === template.id)) s.standardTasks.push({...template,active:true}); });
+  s.standardTasks.forEach(template => { if (!s.tasks.some(t => t.standardTaskId === template.id)) s.tasks.push({id:"standard-"+template.id,title:template.title,emoji:template.emoji,repeatDaily:true,standardTaskId:template.id,doneDates:{},excludedDates:{}}); });
   s.reminder = s.reminder || "20:00";
   s.reminderEnabled = Boolean(s.reminderEnabled);
   s.dailyHabits.forEach(h => {
@@ -171,7 +176,11 @@ function applyTheme() {
 }
 
 function tasksForDate(date) {
-  return state.tasks.filter(t => !t.archived && (t.repeatDaily || t.date === date));
+  return state.tasks.filter(t => {
+    if (t.archived || t.excludedDates?.[date]) return false;
+    if (t.standardTaskId && !state.standardTasks?.some(x => x.id === t.standardTaskId && x.active)) return false;
+    return t.repeatDaily || t.date === date;
+  });
 }
 function taskIsDone(task,date) {
   return Boolean(task.doneDates?.[date] ?? (!task.date && !task.repeatDaily && task.done));
@@ -231,7 +240,7 @@ function home(v) {
  const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), homeWeekKey=weekKey(0), wh=weeklyHabitsForWeek(homeWeekKey);
  v.innerHTML=section("Сегодня","Твоё уютное пространство ♡")+
  `<div class="card home-progress"><div class="row between"><div><div class="muted">Задачи сегодня</div><div class="big">${done} из ${todays.length}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(done,todays.length,"выполнено сегодня")}</div></div>
- <div class="card"><div class="row between"><h3>♡ Мои задачи на сегодня</h3></div>${taskList(todays,todayKey)}<button class="primary" data-add="task" data-add-day="${todayKey}">＋ Добавить задачу на сегодня</button></div>
+ <div class="card"><div class="row between"><h3>♡ Мои задачи на сегодня</h3></div>${taskList(todays,todayKey)}<button class="primary" data-add="task" data-add-day="${todayKey}">＋ Добавить задачу на сегодня</button>${todays.length?'<button class="mini danger" data-delete-today-tasks="yes">Удалить все задачи за сегодня</button>':""}</div>
  <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3></div>
  ${wh.map(x=>weeklyHabitRow(x,homeWeekKey)).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
  <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
@@ -267,8 +276,8 @@ function settingsView(v) {
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
-    <div class="card"><div class="row between"><h3>Мои задачи</h3><button class="mini" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить</button></div>
-    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${(t.emoji || taskEmoji(t.title))} ${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
+    <div class="card"><h3>Стандартные ежедневные дела</h3><p class="muted">Можно добавить дело в ежедневный список или скрыть его. Скрытые дела останутся здесь.</p>
+    ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}</div>
     <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
     ${weekly.map(h=>`<div class="item"><span class="itemtext">${(h.emoji || taskEmoji(h.name))} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
@@ -536,6 +545,17 @@ document.addEventListener("click", e => {
     return;
   }
 
+  if (b.dataset.toggleStandardTask) {
+    const item=(state.standardTasks||[]).find(x=>x.id===b.dataset.toggleStandardTask);
+    if(item){item.active=!item.active;save();render();}
+    return;
+  }
+  if (b.dataset.deleteTodayTasks) {
+    if (!confirm("Удалить все задачи за сегодня? Повторяющиеся задачи скроются только на сегодня и появятся снова завтра.")) return;
+    const day=dateKey(today);
+    state.tasks=state.tasks.filter(t=>{if(t.archived)return true;if(t.repeatDaily){t.excludedDates=t.excludedDates&&typeof t.excludedDates==="object"?t.excludedDates:{};t.excludedDates[day]=true;return true;}return t.date!==day;});
+    save();render();return;
+  }
   if (b.dataset.theme) {
     state.theme = b.dataset.theme;
     save();
