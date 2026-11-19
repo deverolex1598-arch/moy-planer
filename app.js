@@ -42,7 +42,7 @@ function normalizeState(data) {
   s.archive = Array.isArray(s.archive) ? s.archive : [];
   s.quotes = Array.isArray(s.quotes) ? s.quotes : [];
   s.theme = s.theme || "lavender";
-  s.hiddenTabs = Array.isArray(s.hiddenTabs) ? s.hiddenTabs.filter(x => ["week","cycle","diary","calendar"].includes(x)) : [];
+  s.hiddenTabs = Array.isArray(s.hiddenTabs) ? s.hiddenTabs.filter(x => ["week","cycle","diary"].includes(x)) : [];
   if (!s.themeStyleV2) { s.theme = "lavender"; s.themeStyleV2 = true; }
   s.moods = s.moods && typeof s.moods === "object" ? s.moods : {};
   s.selfCareLog = s.selfCareLog && typeof s.selfCareLog === "object" ? s.selfCareLog : {};
