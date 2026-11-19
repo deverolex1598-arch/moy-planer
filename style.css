@@ -289,3 +289,10 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 .day-cycle-graph>div{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
 .day-cycle-graph i{height:9px;border-radius:10px;background:var(--soft);overflow:hidden}
 .day-cycle-graph i b{display:block;height:100%;border-radius:10px;background:var(--accent)}
+
+/* Выбор начала и окончания менструации в одном календаре */
+.cycle-range-picker{margin:10px 0 14px;padding:10px;border:1px solid var(--line);border-radius:16px;background:var(--bg)}
+.cycle-range-picker .cycle-date.range-selected{background:var(--soft);border-color:var(--accent);color:var(--ink)}
+.cycle-range-picker .cycle-date.range-edge{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:800}
+.cycle-range-hint{font-size:11px;min-height:18px;margin:10px 2px 2px}
+#savePeriodRange:disabled{opacity:.45;cursor:not-allowed}
