@@ -1,4 +1,4 @@
-const CACHE = "soft-planner-v11";
+const CACHE = "soft-planner-v12";
 const FILES = ["./", "index.html", "style.css", "app.js", "cycle.js", "auth.js", "seed.json", "manifest.webmanifest", "icon.svg"];
 const FRESH_FILES = new Set(["/", "/index.html", "/style.css", "/app.js", "/cycle.js", "/auth.js", "/seed.json"]);
 
