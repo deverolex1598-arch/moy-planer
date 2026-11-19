@@ -62,7 +62,7 @@ function save() {
   try {
     localStorage.setItem(key, JSON.stringify(state));
     const status = $("#storageStatus");
-    if (status) status.textContent = "Данные хранятся на этом устройстве";
+    if (status) status.textContent = userId ? "♡ Ты в своём аккаунте · синхронизация включена" : "Данные хранятся на этом устройстве";
   } catch (error) {
     const status = $("#storageStatus");
     if (status) status.textContent = "Хранение на устройстве недоступно — записи пока останутся открытыми в этой вкладке";
@@ -225,7 +225,7 @@ function dayPicker() {
 }
 
 function habitRow(h,day) {
-  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">⋯</button></div>`;
+  return `<div class="item"><button class="check ${h.done[day]?"on":""}" data-habit="${h.id}" data-day="${day}">${h.done[day]?"✓":""}</button><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini" data-edit-habit="${h.id}">Изменить</button></div>`;
 }
 
 function taskList(items) {
@@ -278,9 +278,8 @@ function calendar(v){
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
     const d=new Date(year,monthIndex,dayNum), key=dateKey(d);
     const entries=(state.calendarEntries||[]).filter(x=>x.date===key);
-    const tasks=state.tasks.filter(x=>Number(x.day)===((d.getDay()+6)%7)&&!x.archived);
     const isToday=key===dateKey(today), selected=key===selectedCalendarDate;
-    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length||tasks.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join("")}</small>`:tasks.length?'<i class="task-dot"></i>':''}</button>`;
+    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join("")}</small>` :""}</button>`;
   }).join("");
   const selected = new Date(selectedCalendarDate+"T12:00:00");
   const selectedLabel = selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -288,9 +287,9 @@ function calendar(v){
   const types={birthday:"🎂 День рождения",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
   v.innerHTML=section("Календарь","Месяц целиком — выбирай день и сохраняй важное ♡")+
     `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
-    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ Событие</span><span><i class="task-dot"></i> Есть планы</span></div></div>
-    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Заметки и важные даты этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
-    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini" data-edit-calendar="${x.id}">Изменить</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">Пока нет событий. Добавь день рождения, встречу, напоминание или просто заметку ♡</div>'}</div>`;
+    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ События</span></div></div>
+    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">События и заметки этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
+    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini" data-edit-calendar="${x.id}">Изменить</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день пока нет событий или заметок ♡</div>'}</div>`;
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
