@@ -194,7 +194,7 @@ function applyTheme() {
     document.body.style.setProperty("--bg",colors.bg);
     document.body.style.setProperty("--card",colors.card);
     document.body.style.setProperty("--ink",colors.ink);
-    document.body.style.setProperty("--muted",colors.ink);
+    document.body.style.setProperty("--muted","color-mix(in srgb, "+colors.ink+" 68%, "+colors.bg+")");
     document.body.style.setProperty("--accent",colors.accent);
     document.body.style.setProperty("--soft","color-mix(in srgb, "+colors.accent+" 14%, "+colors.bg+")");
     document.body.style.setProperty("--line","color-mix(in srgb, "+colors.accent+" 24%, "+colors.bg+")");
