@@ -246,7 +246,18 @@ function render() {
   });
   $("#tabs").style.setProperty("--visible-tabs", Math.max(1, Array.from(tabButtons).filter(b => !b.hidden).length));
   let v = $("#view");
-  ({home, week, calendar, cycle: window.cycleTab, diary, settings: settingsView}[tab] || home)(v);
+  const renderView = ({home, week, calendar, cycle: window.cycleTab, diary, settings: settingsView}[tab] || home);
+  try {
+    renderView(v);
+  } catch (error) {
+    console.error("Planner view render failed:", tab, error);
+    if (tab === "calendar") {
+      v.innerHTML = section("Календарь временно не открылся", "Я сохранила твои записи. Попробуй ещё раз позже ♡") +
+        `<div class="card"><p>Возникла ошибка при открытии календаря.</p><p class="muted">Диагностика: ${escapeHtml(error?.message || String(error))}</p></div>`;
+    } else {
+      v.innerHTML = section("Не удалось открыть раздел", "Твои записи не удалены ♡");
+    }
+  }
 }
 
 function section(title, sub = "") {
