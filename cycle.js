@@ -78,11 +78,13 @@ document.addEventListener("submit",e=>{
  if(e.target.id==="cycleLogForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target);c.logs[window.cycleLogDay]={pain:f.get("pain"),bleeding:f.get("bleeding"),mood:f.get("mood"),energy:f.get("energy"),sleep:f.get("sleep"),appetite:f.get("appetite"),symptoms:f.getAll("symptoms"),medication:f.get("medication"),notes:f.get("notes")};save();cycleTab($("#view"));}
 });
 document.addEventListener("click",e=>{
- const rangeDay=e.target.closest("[data-cycle-range-day]");if(rangeDay){const chosen=rangeDay.dataset.cycleRangeDay;if(!rangeStartDraft||rangeEndDraft||chosen<rangeStartDraft){rangeStartDraft=chosen;rangeEndDraft="";}else{rangeEndDraft=chosen;}cycleTab($("#view"));return;}\n const dayCell=e.target.closest("[data-cycle-day]");
+ const rangeDay=e.target.closest("[data-cycle-range-day]");if(rangeDay){const chosen=rangeDay.dataset.cycleRangeDay;if(!rangeStartDraft||rangeEndDraft||chosen<rangeStartDraft){rangeStartDraft=chosen;rangeEndDraft="";}else{rangeEndDraft=chosen;}cycleTab($("#view"));return;}
+ const dayCell=e.target.closest("[data-cycle-day]");
  if(dayCell){window.cycleLogDay=dayCell.dataset.cycleDay;cycleTab($("#view"));return;}
  const b=e.target.closest("button");if(!b)return;const c=cdata();
  if(b.hasAttribute("data-period-view")){selectedCycleId=b.dataset.periodView;const chosen=c.periods.find(x=>x.id===selectedCycleId);if(chosen)window.cycleLogDay=chosen.start;cycleTab($("#view"));return;}
- if(b.hasAttribute("data-range-month")){rangeMonthOffset+=Number(b.dataset.rangeMonth)||0;cycleTab($("#view"));return;}\n if(b.hasAttribute("data-cycle-month")){monthOffset+=Number(b.dataset.cycleMonth)||0;cycleTab($("#view"));return;}
+ if(b.hasAttribute("data-range-month")){rangeMonthOffset+=Number(b.dataset.rangeMonth)||0;cycleTab($("#view"));return;}
+ if(b.hasAttribute("data-cycle-month")){monthOffset+=Number(b.dataset.cycleMonth)||0;cycleTab($("#view"));return;}
  if(b.hasAttribute("data-cycle-forecast")){const v=$("#cycleForecast").value;if(v&&!validDate(v))return alert("Укажи корректную дату прогноза.");c.forecastOverride=v;save();cycleTab($("#view"));}
  if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){if(c.periods.some(x=>x.start===today))return alert("Сегодняшняя дата уже записана в истории.");c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
  if(b.hasAttribute("data-period-delete")&&confirm("Удалить запись из истории?")){c.periods=c.periods.filter(x=>x.id!==b.dataset.periodDelete);save();cycleTab($("#view"));}
