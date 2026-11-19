@@ -28,6 +28,14 @@ function monthCalendar(c){
  return html;
 }
 
+let rangeMonthOffset=0,rangeStartDraft="",rangeEndDraft="";
+function rangePicker(){
+ const base=new Date(new Date().getFullYear(),new Date().getMonth()+rangeMonthOffset,1,12),year=base.getFullYear(),month=base.getMonth();
+ const first=(base.getDay()+6)%7,days=new Date(year,month+1,0).getDate(),cells=Math.ceil((first+days)/7)*7,labels=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+ let html='<div class="cycle-range-picker"><div class="cycle-month-head"><button class="ghost" type="button" data-range-month="-1">‹</button><b class="cycle-month-title">'+esc(base.toLocaleDateString("ru-RU",{month:"long",year:"numeric"}))+'</b><button class="ghost" type="button" data-range-month="1">›</button></div><div class="cycle-month-grid">'+labels.map(x=>'<div class="cycle-weekday">'+x+'</div>').join("");
+ for(let i=0;i<cells;i++){const n=i-first+1,d=new Date(year,month,n,12),k=key(d),outside=d.getMonth()!==month,selected=rangeStartDraft&&rangeEndDraft&&k>=rangeStartDraft&&k<=rangeEndDraft,edge=k===rangeStartDraft||k===rangeEndDraft;html+='<button type="button" class="cycle-date '+(outside?'outside ':'')+(selected?'range-selected ':'')+(edge?'range-edge':'')+'" data-cycle-range-day="'+k+'">'+d.getDate()+'</button>';}
+ return html+'</div><p class="muted cycle-range-hint">'+(rangeStartDraft?(rangeEndDraft?'Выбрано: '+esc(rangeStartDraft)+' — '+esc(rangeEndDraft):'Теперь выбери последний день'):'Нажми на первый день менструации, затем на последний')+'</p><input type="hidden" name="start" value="'+esc(rangeStartDraft)+'"><input type="hidden" name="end" value="'+esc(rangeEndDraft)+'"></div>';
+}
 function cycleCharts(c,period,end){
  const entries=Object.keys(c.logs||{}).filter(d=>d>=period.start&&d<=end).sort();
  const defs=[
@@ -58,23 +66,23 @@ function cycleTab(v){
  select("pain","Боль",["Нет","Лёгкая","Умеренная","Сильная"],log.pain)+select("bleeding","Объём выделений",["Нет","Мажущие","Слабые","Умеренные","Обильные"],log.bleeding)+select("mood","Настроение",["Отличное","Хорошее","Нейтральное","Грустное","Тревожное","Раздражительное"],log.mood)+select("energy","Энергия",["Очень низкая","Низкая","Средняя","Высокая"],log.energy)+select("sleep","Сон",["Плохой","Средний","Хороший","Отличный"],log.sleep)+select("appetite","Аппетит",["Сниженный","Обычный","Повышенный"],log.appetite)+
  '<fieldset><legend>Симптомы</legend><div class="cycle-symptoms">'+symptoms.map(s=>'<label><input type="checkbox" name="symptoms" value="'+esc(s)+'" '+((log.symptoms||[]).includes(s)?'checked':'')+'> '+esc(s)+'</label>').join("")+'</div></fieldset><label>Добавить свой симптом<input id="customSymptom" placeholder="Например, чувствительность к запахам"></label><button type="button" class="ghost" data-cycle-add>Добавить симптом</button><label>Лекарства / контрацепция (необязательно)<input name="medication" value="'+esc(log.medication||"")+'"></label><label>Заметки<textarea name="notes" rows="3">'+esc(log.notes||"")+'</textarea></label><button class="primary">Сохранить наблюдение</button></form></div>';
  const nextCard='<div class="card cycle-card"><h3>Следующая менструация</h3><div class="cycle-forecast"><strong>'+(next?esc(date(next).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})):"Пока нет прогноза")+'</strong><span>Приблизительная дата, не медицинское заключение</span></div><label>Исправить прогноз<input id="cycleForecast" type="date" value="'+esc(next)+'"></label><button class="ghost" data-cycle-forecast>Сохранить дату</button></div>';
- const historyCard='<div class="card cycle-card"><h3>История цикла</h3><form id="periodForm" class="cycle-form"><label>Первый день<input name="start" type="date" required></label><label>Последний день<input name="end" type="date"></label><button class="primary">＋ Сохранить даты</button></form><div class="cycle-stats"><div><b>'+(a?a+" дн.":"—")+'</b><span>средняя длина цикла</span></div><div><b>'+p.length+'</b><span>записей в истории</span></div></div>'+
+ const historyCard='<div class="card cycle-card"><h3>История цикла</h3><form id="periodForm"><p class="muted">Выбери обе даты в одном календаре</p>'+rangePicker()+'<button class="primary" type="submit" id="savePeriodRange" '+(!rangeStartDraft||!rangeEndDraft?'disabled':'')+'>＋ Сохранить даты</button></form><div class="cycle-stats"><div><b>'+(a?a+" дн.":"—")+'</b><span>средняя длина цикла</span></div><div><b>'+p.length+'</b><span>записей в истории</span></div></div>'+
  (p.length?'<h3>Прошлые циклы</h3>'+p.map(x=>'<div class="item"><span class="itemtext">'+esc(x.start)+'<small>'+(x.end?' — '+esc(x.end):'')+'</small></span><button class="mini" data-period-view="'+esc(x.id)+'">'+(x.id===selectedCycleId?'Выбран':'Графики')+'</button><button class="mini" data-period-edit="'+esc(x.id)+'">Изменить</button><button class="mini" data-period-delete="'+esc(x.id)+'">×</button></div>').join(""):'<div class="empty">Здесь появится история ♡</div>')+
  (next?'<button class="primary" data-cycle-new>Начался новый цикл?</button>':'')+'</div>';
- v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+monthCalendar(c)+dailyCard+historyCharts+nextCard+historyCard;
+v.innerHTML=section("Женские дни","Бережное наблюдение за циклом ♡")+monthCalendar(c)+dailyCard+historyCharts+nextCard+historyCard;
 }
 window.cycleTab=cycleTab;window.cycleLogDay=today;
 document.addEventListener("change",e=>{if(e.target.id==="cycleLogDate"){window.cycleLogDay=e.target.value;cycleTab(document.querySelector("#view"));}});
 document.addEventListener("submit",e=>{
- if(e.target.id==="periodForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target),start=f.get("start"),end=f.get("end");if(!validDate(start)|| (end&&!validDate(end)))return alert("Проверь дату начала и окончания.");if(end&&end<start)return alert("Дата окончания раньше начала.");if(c.periods.some(x=>x.start===start))return alert("Такая дата начала уже есть в истории.");c.periods.push({id:Date.now().toString(36),start,end:end||""});c.forecastOverride="";save();cycleTab($("#view"));}
+ if(e.target.id==="periodForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target),start=f.get("start"),end=f.get("end");if(!validDate(start)||!validDate(end))return alert("Выбери первый и последний день в календаре.");if(end<start)return alert("Последний день не может быть раньше первого.");if(c.periods.some(x=>x.start===start))return alert("Такая дата начала уже есть в истории.");c.periods.push({id:Date.now().toString(36),start,end});c.forecastOverride="";rangeStartDraft="";rangeEndDraft="";save();cycleTab($("#view"));}
  if(e.target.id==="cycleLogForm"){e.preventDefault();const c=cdata(),f=new FormData(e.target);c.logs[window.cycleLogDay]={pain:f.get("pain"),bleeding:f.get("bleeding"),mood:f.get("mood"),energy:f.get("energy"),sleep:f.get("sleep"),appetite:f.get("appetite"),symptoms:f.getAll("symptoms"),medication:f.get("medication"),notes:f.get("notes")};save();cycleTab($("#view"));}
 });
 document.addEventListener("click",e=>{
- const dayCell=e.target.closest("[data-cycle-day]");
+ const rangeDay=e.target.closest("[data-cycle-range-day]");if(rangeDay){const chosen=rangeDay.dataset.cycleRangeDay;if(!rangeStartDraft||rangeEndDraft||chosen<rangeStartDraft){rangeStartDraft=chosen;rangeEndDraft="";}else{rangeEndDraft=chosen;}cycleTab($("#view"));return;}\n const dayCell=e.target.closest("[data-cycle-day]");
  if(dayCell){window.cycleLogDay=dayCell.dataset.cycleDay;cycleTab($("#view"));return;}
  const b=e.target.closest("button");if(!b)return;const c=cdata();
  if(b.hasAttribute("data-period-view")){selectedCycleId=b.dataset.periodView;const chosen=c.periods.find(x=>x.id===selectedCycleId);if(chosen)window.cycleLogDay=chosen.start;cycleTab($("#view"));return;}
- if(b.hasAttribute("data-cycle-month")){monthOffset+=Number(b.dataset.cycleMonth)||0;cycleTab($("#view"));return;}
+ if(b.hasAttribute("data-range-month")){rangeMonthOffset+=Number(b.dataset.rangeMonth)||0;cycleTab($("#view"));return;}\n if(b.hasAttribute("data-cycle-month")){monthOffset+=Number(b.dataset.cycleMonth)||0;cycleTab($("#view"));return;}
  if(b.hasAttribute("data-cycle-forecast")){const v=$("#cycleForecast").value;if(v&&!validDate(v))return alert("Укажи корректную дату прогноза.");c.forecastOverride=v;save();cycleTab($("#view"));}
  if(b.hasAttribute("data-cycle-new")&&confirm("Отметить сегодня как начало нового цикла?")){if(c.periods.some(x=>x.start===today))return alert("Сегодняшняя дата уже записана в истории.");c.periods.push({id:Date.now().toString(36),start:today,end:""});c.forecastOverride="";save();cycleTab($("#view"));}
  if(b.hasAttribute("data-period-delete")&&confirm("Удалить запись из истории?")){c.periods=c.periods.filter(x=>x.id!==b.dataset.periodDelete);save();cycleTab($("#view"));}
