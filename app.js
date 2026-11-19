@@ -441,8 +441,10 @@ function holidayForDateCard(key) {
   const selected=new Date(key+"T12:00:00");
   const isToday=key===dateKey(today);
   const heading=isToday?"🎉 Праздник сегодня":"🎉 Праздники на выбранную дату";
-  const unusual=fallbackUnusualHoliday(key);
-  if(unusual)items.push({title:unusual,source:"Тематический календарь"});
+  if(!items.length){
+    const unusual=fallbackUnusualHoliday(key);
+    if(unusual)items.push({title:unusual,source:"Тематический календарь"});
+  }
   if(items.length)return `<div class="card holiday-card"><h3>${heading}</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${escapeHtml(x.source)}</span></p>`).join("")}</div>`;
   return `<div class="card holiday-card"><h3>${heading}</h3><p><b>На эту дату пока нет подтверждённого праздника в календарях ООН, России или ДНР.</b></p><p class="muted">${selected.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</p></div>`;
 }
@@ -455,8 +457,8 @@ function calendar(v){
     const dayNum=i-firstOffset+1;
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
     const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(state.calendarEntries||[]).filter(x=>x.date===key);
-    const isToday=key===dateKey(today),selected=key===selectedCalendarDate;
-    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨").join(""))}</small>`:""}</button>`;
+    const isToday=key===dateKey(today),isSelected=key===selectedCalendarDate;
+    return `<button class="month-day ${isToday?"today":""} ${isSelected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨").join(""))}</small>`:""}</button>`;
   }).join("");
   const selected=new Date(selectedCalendarDate+"T12:00:00");
   const selectedLabel=selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
