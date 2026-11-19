@@ -86,6 +86,23 @@ function normalizeState(data) {
   return s;
 }
 
+function removeGuestCustomTasks(kind) {
+  if (window.plannerCurrentUserId) {
+    try {
+      const guest = JSON.parse(localStorage.getItem("softPlanner") || "{}") || {};
+      if (kind === "daily") {
+        guest.tasks = (guest.tasks || []).filter(t => t.archived || Boolean(t.standardTaskId));
+        guest.dailyHabits = [];
+      } else {
+        guest.weeklyHabits = (guest.weeklyHabits || []).filter(h => Boolean(h.standardWeeklyTaskId));
+      }
+      localStorage.setItem("softPlanner", JSON.stringify(guest));
+    } catch (error) {
+      console.warn("Could not update guest planner cache after deletion", error);
+    }
+  }
+}
+
 function save() {
   const userId = window.plannerCurrentUserId;
   const key = userId ? "softPlanner:user:" + userId : "softPlanner";
@@ -568,11 +585,13 @@ document.addEventListener("click", e => {
   if (b.dataset.deleteCustomDailyTasks) {
     if (!confirm("Удалить все собственные ежедневные задачи? Стандартные задачи останутся без изменений.")) return;
     state.tasks = (state.tasks || []).filter(t => t.archived || Boolean(t.standardTaskId));
+    removeGuestCustomTasks("daily");
     save();render();return;
   }
   if (b.dataset.deleteCustomWeeklyTasks) {
     if (!confirm("Удалить все собственные дела на неделю? Стандартные дела останутся без изменений.")) return;
     state.weeklyHabits = (state.weeklyHabits || []).filter(h => Boolean(h.standardWeeklyTaskId));
+    removeGuestCustomTasks("weekly");
     save();render();return;
   }
   if (b.dataset.deleteTodayTasks) {
