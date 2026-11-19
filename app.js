@@ -232,8 +232,10 @@ function settingsView(v) {
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
     <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
-    <div class="card"><div class="row between"><h3>Редактирование привычек</h3><button class="mini" data-add="habit">＋ Добавить</button></div>
-    ${state.dailyHabits.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-habit="${h.id}" aria-label="Изменить привычку" title="Изменить">✎</button><button class="mini" data-delete-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
+    <div class="card"><div class="row between"><h3>Мои задачи</h3><button class="mini" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить</button></div>
+    ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
+    <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
     <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
     ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
@@ -286,7 +288,7 @@ function week(v){
  <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
  <div class="card"><div class="row between"><h3>✿ Дела на всю неделю</h3><span class="muted">${weekly.filter(x=>weeklyDone(x,selectedWeekKey)).length}/${weekly.length}</span></div>${weekly.map(x=>weeklyHabitRow(x,selectedWeekKey)).join("")||'<div class="empty">Добавь дело на всю неделю ♡</div>'}<button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  ${weekTaskChart(selectedWeekKey)}
- <div class="week-stack">${order.map(i=>{const items=dayTasks(i),done=items.filter(t=>t.done).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items,dateKey(dateFor(i)))}<button class="mini" data-add="task" data-add-day="${dateKey(dateFor(i))}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
+ <div class="week-stack">${order.map(i=>{const items=dayTasks(i),date=dateKey(dateFor(i)),done=items.filter(t=>taskIsDone(t,date)).length;return `<section class="card week-day-card ${i===selectedDay?"is-selected":""}"><button class="week-day-heading" data-day="${i}"><span><b>${DAYS[i]}</b><small>${FULL[i]}</small></span><span class="muted">${done}/${items.length} выполнено　⌃</span></button>${taskList(items,dateKey(dateFor(i)))}<button class="mini" data-add="task" data-add-day="${dateKey(dateFor(i))}">＋ Добавить задачу</button></section>`;}).join("")}</div>`;
 }
 
 function diary(v) {
@@ -347,17 +349,15 @@ function donut(done,total,label) {
 
 function stats(v) {
   const tasks = state.tasks.filter(t => !t.archived);
-  const taskDone = tasks.filter(t => t.done).length;
-  const habitTotal = state.dailyHabits.length * 7;
-  const habitDone = state.dailyHabits.reduce((n,h) => n + h.done.filter(Boolean).length,0);
+  const taskDone = tasks.reduce((n,t)=>n+Object.values(t.doneDates||{}).filter(Boolean).length,0);
   v.innerHTML = section("Мой прогресс","Каждый маленький шаг имеет значение") +
     `<div class="card"><h3>Выполнение задач</h3><div class="progress-charts">${donut(taskDone,tasks.length,"Задачи")}</div></div>
-    <div class="card"><h3>Привычки за неделю</h3><div class="progress-charts">${donut(habitDone,habitTotal,"Привычки")}</div></div>
+    
     <div class="card"><div class="row between"><span>Выполнено задач</span><b>${taskDone} из ${tasks.length}</b></div>${progress(pct(taskDone,tasks.length))}</div>`;
 }
 
 function openEditor(type,item = {}) {
-  editing = {type,id:item.id,day:item.day};
+  editing = {type,id:item.id,day:item.day,date:item.date};
   const form = $("#editForm");
   form.innerHTML = "";
   const fields = {
@@ -456,7 +456,8 @@ document.addEventListener("click", e => {
   }
 
   if (b.dataset.add) {
-    handleAdd(b.dataset.add, Number(b.dataset.addDay ?? selectedDay));
+    const addDay=b.dataset.addDay??selectedDay;
+    handleAdd(b.dataset.add, /^\d{4}-\d{2}-\d{2}$/.test(String(addDay))?String(addDay):Number(addDay));
     return;
   }
 
