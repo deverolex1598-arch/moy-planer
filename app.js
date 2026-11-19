@@ -235,14 +235,12 @@ function settingsView(v) {
     <div class="card"><div class="row between"><h3>Мои задачи</h3><button class="mini" data-add="task" data-add-day="${dateKey(today)}">＋ Добавить</button></div>
     ${state.tasks.filter(t=>!t.archived).map(t=>`<div class="item"><span class="itemtext">${escapeHtml(t.title)}</span><button class="mini icon-edit" data-edit-task="${t.id}" aria-label="Изменить задачу" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Задач пока нет</div>'}</div>
     <div class="card"><div class="row between"><h3>Дела на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;).join("")||'<div class="empty">Привычек пока нет</div>'}</div>
-    <div class="card"><div class="row between"><h3>Редактирование дел на неделю</h3><button class="mini" data-add="weeklyHabit">＋ Добавить</button></div>
-    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button><button class="mini" data-delete-weekly-habit="${h.id}">Удалить</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
+    ${weekly.map(h=>`<div class="item"><span class="itemtext">${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить дело" title="Изменить">✎</button></div>`).join("")||'<div class="empty">Дел на неделю пока нет</div>'}</div>`;
 }
 
 function more(v) {
   v.innerHTML = section("Ещё","Дополнительные разделы твоего планера ♡") +
-    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Привычки и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
+    `<div class="card more-links"><button class="ghost" data-go="habits">♡ Задачи и дела на неделю</button><button class="ghost" data-go="notes">✎ Заметки</button><button class="ghost" data-go="stats">◔ Прогресс</button></div>`;
 }
 
 function dayPicker() {
@@ -298,29 +296,72 @@ function diary(v) {
     ${entries.map(x => `<article class="note-preview"><div class="row between"><b>${escapeHtml(x.title || "Запись")}</b><span class="muted">${new Date(x.createdAt).toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})}</span></div><p>${escapeHtml(x.text)}</p><button class="mini icon-edit" data-edit-diary="${x.id}" aria-label="Изменить запись" title="Изменить">✎</button><button class="mini" data-delete-diary="${x.id}">Удалить</button></article>`).join("") || '<div class="empty">Здесь будут храниться твои мысли и воспоминания ♡</div>'}</div>`;
 }
 
+function orthodoxEaster(year) {
+  const a=year%4,b=year%7,c=year%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7;
+  const month=Math.floor((d+e+114)/31),day=(d+e+114)%31+1;
+  const julian=new Date(year,month-1,day+13,12);
+  return dateKey(julian);
+}
+function holidaysForDate(key) {
+  const md=key.slice(5),year=Number(key.slice(0,4)),items=[];
+  const ru={"01-01":"Новый год","01-02":"Новогодние каникулы","01-03":"Новогодние каникулы","01-04":"Новогодние каникулы","01-05":"Новогодние каникулы","01-06":"Новогодние каникулы","01-07":"Рождество Христово","01-08":"Новогодние каникулы","02-23":"День защитника Отечества","03-08":"Международный женский день","05-01":"Праздник Весны и Труда","05-09":"День Победы","06-12":"День России","11-04":"День народного единства"};
+  if(ru[md])items.push({title:ru[md],source:"Россия"});
+  if(md==="05-11")items.push({title:"День Донецкой Народной Республики",source:"ДНР"});
+  if(md==="09-30")items.push({title:"День возвращения ДНР в Россию",source:"ДНР"});
+  const easter=orthodoxEaster(year);
+  if(key===easter)items.push({title:"Светлое Христово Воскресение (Пасха)",source:"ДНР"});
+  const trinity=new Date(easter+"T12:00:00");trinity.setDate(trinity.getDate()+49);
+  if(key===dateKey(trinity))items.push({title:"День Святой Троицы",source:"ДНР"});
+  return items;
+}
+function unusualHolidayUrl(d) {
+  const month=d.toLocaleDateString("en-US",{month:"long"}).toLowerCase();
+  return "https://www.daysoftheyear.com/days/"+month+"-"+d.getDate()+"/";
+}
+function holidayTodayCard() {
+  const key=dateKey(today),items=holidaysForDate(key),url=unusualHolidayUrl(today);
+  if(items.length)return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${x.source}</span></p>`).join("")}</div>`;
+  return `<div class="card holiday-card"><h3>🎉 Праздник сегодня</h3><p id="unusualHolidayText" class="muted">Ищем необычный праздник дня…</p><a href="${url}" target="_blank" rel="noopener">Посмотреть необычные праздники дня</a></div>`;
+}
+function loadUnusualHoliday() {
+  const node=$("#unusualHolidayText");if(!node)return;
+  const url=unusualHolidayUrl(today);
+  fetch(url,{mode:"cors"}).then(r=>{if(!r.ok)throw new Error("Holiday page unavailable");return r.text();})
+    .then(html=>{const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector("main h1, article h1, h1")?.textContent?.trim();if(title&&title.length<140)node.textContent=title;else node.textContent="Сегодня можно выбрать необычный праздник на сайте Days of the Year.";})
+    .catch(()=>{if(node.isConnected)node.textContent="Сегодня необычный праздник можно посмотреть по ссылке ниже ♡";});
+}
 function calendar(v){
   const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
   const year = month.getFullYear(), monthIndex = month.getMonth();
   const monthName = month.toLocaleDateString("ru-RU",{month:"long",year:"numeric"});
-  const firstOffset = (month.getDay()+6)%7;
-  const daysInMonth = new Date(year,monthIndex+1,0).getDate();
+  const firstOffset = (month.getDay()+6)%7, daysInMonth = new Date(year,monthIndex+1,0).getDate();
   const cells = Array.from({length:Math.ceil((firstOffset+daysInMonth)/7)*7},(_,i)=>{
     const dayNum=i-firstOffset+1;
     if(dayNum<1 || dayNum>daysInMonth) return '<div class="month-day empty-day"></div>';
-    const d=new Date(year,monthIndex,dayNum), key=dateKey(d);
-    const entries=(state.calendarEntries||[]).filter(x=>x.date===key);
-    const isToday=key===dateKey(today), selected=key===selectedCalendarDate;
-    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨")).join("")}</small>` :""}</button>`;
+    const d=new Date(year,monthIndex,dayNum),key=dateKey(d),entries=(state.calendarEntries||[]).filter(x=>x.date===key);
+    const isToday=key===dateKey(today),selected=key===selectedCalendarDate;
+    return `<button class="month-day ${isToday?"today":""} ${selected?"selected":""} ${entries.length?"has-events":""}" data-calendar-date="${key}"><span>${dayNum}</span>${entries.length?`<small class="month-day-icons">${entries.slice(0,3).map(x=>({birthday:"🎂",anniversary:"💞",reminder:"✨",appointment:"🩺",holiday:"🎉",trip:"✈️",other:"✨"}[x.kind]||"✨").join(""))}</small>`:""}</button>`;
   }).join("");
-  const selected = new Date(selectedCalendarDate+"T12:00:00");
-  const selectedLabel = selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const selected=new Date(selectedCalendarDate+"T12:00:00");
+  const selectedLabel=selected.toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const entries=(state.calendarEntries||[]).filter(x=>x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
-  const types={birthday:"🎂 День рождения",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
+  const types={birthday:"🎂 Личный праздник",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
+  const doneTasks=tasksForDate(selectedCalendarDate).filter(t=>taskIsDone(t,selectedCalendarDate));
+  const weekDone=(state.weeklyHabits||[]).filter(h=>weeklyDone(h,weekStartKey(selectedCalendarDate)));
+  const cycle=state.cycle||{},log=(cycle.logs||{})[selectedCalendarDate]||{};
+  const period=(cycle.periods||[]).find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
+  const hasCycle=Boolean(period||Object.values(log).some(x=>Array.isArray(x)?x.length:x));
+  const cycleCard=hasCycle?`<div class="card"><h3>🌸 Цикл и самочувствие за этот день</h3>${period?`<p><b>Менструация</b> · день ${Math.max(1,Math.floor((new Date(selectedCalendarDate+"T12:00:00")-new Date(period.start+"T12:00:00"))/86400000)+1)}</p>`:""}${log.pain?`<p>Боль: <b>${escapeHtml(log.pain)}</b></p>`:""}${log.bleeding?`<p>Выделения: <b>${escapeHtml(log.bleeding)}</b></p>`:""}${log.mood?`<p>Настроение: <b>${escapeHtml(log.mood)}</b></p>`:""}${log.symptoms?.length?`<p>Симптомы: ${escapeHtml(log.symptoms.join(", "))}</p>`:""}${log.notes?`<p>${escapeHtml(log.notes)}</p>`:""}</div>`:"";
   v.innerHTML=section("Календарь","Месяц целиком — выбирай день и сохраняй важное ♡")+
     `<div class="card month-calendar"><div class="month-head"><button class="ghost" data-month-shift="-1" aria-label="Предыдущий месяц">‹</button><b>${monthName}</b><button class="ghost" data-month-shift="1" aria-label="Следующий месяц">›</button></div>
-    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ События</span></div></div>
-    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">События и заметки этого дня</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
-    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день пока нет событий или заметок ♡</div>'}</div>`;
+    <div class="month-grid weekday-labels">${DAYS.map(x=>`<span>${x}</span>`).join("")}</div><div class="month-grid">${cells}</div><div class="month-legend"><span>✨ Личные события</span></div></div>
+    ${holidayTodayCard()}
+    <div class="card"><div class="row between"><div><h3>♡ ${selectedLabel}</h3><div class="muted">Сначала твои личные праздники и события</div></div><button class="primary" data-add-calendar="${selectedCalendarDate}">＋ Добавить</button></div>
+    ${entries.map(x=>`<article class="calendar-entry ${x.done?"is-done":""}"><div class="row between"><b>${types[x.kind]||types.other}</b><button class="check ${x.done?"on":""}" data-calendar-done="${x.id}">${x.done?"✓":""}</button></div><strong>${escapeHtml(x.title)}</strong>${x.note?`<p>${escapeHtml(x.note)}</p>`:""}<div class="actions"><button class="mini icon-edit" data-edit-calendar="${x.id}" aria-label="Изменить событие" title="Изменить">✎</button><button class="mini" data-delete-calendar="${x.id}">Удалить</button></div></article>`).join("")||'<div class="empty">На этот день нет личных праздников или событий ♡</div>'}</div>
+    <div class="card"><h3>✓ Выполненные задачи за этот день</h3>${doneTasks.map(t=>`<div class="item done"><span class="itemtext">${escapeHtml(t.title)}</span></div>`).join("")||'<p class="muted">Нет выполненных задач за этот день.</p>'}</div>
+    <div class="card"><h3>✿ Выполненные дела на неделю</h3>${weekDone.map(h=>`<div class="item done"><span class="itemtext">${escapeHtml(h.name)}</span></div>`).join("")||'<p class="muted">Нет выполненных дел на этой неделе.</p>'}</div>
+    ${cycleCard}`;
+  loadUnusualHoliday();
 }
 function habits(v) {
   const weekly=state.weeklyHabits||[];
