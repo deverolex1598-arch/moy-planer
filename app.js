@@ -547,7 +547,7 @@ document.addEventListener("click", e => {
 
   if (b.dataset.toggleStandardTask) {
     const item=(state.standardTasks||[]).find(x=>x.id===b.dataset.toggleStandardTask);
-    if(item){item.active=!item.active;save();render();}
+    if(item){item.active=!item.active;if(item.active&&!state.tasks.some(t=>t.standardTaskId===item.id)){state.tasks.push({id:"standard-"+item.id,title:item.title,emoji:item.emoji,repeatDaily:true,standardTaskId:item.id,doneDates:{},excludedDates:{}});}save();render();}
     return;
   }
   if (b.dataset.deleteTodayTasks) {
@@ -608,7 +608,7 @@ document.addEventListener("click", e => {
   if (b.id === "deleteEditing" && editing?.id) {
     const {type,id}=editing;
     if (!confirm("Удалить эту запись?")) return;
-    if(type==="task") state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));
+    if(type==="task"){const task=byId(state.tasks,id);if(task?.standardTaskId){const standard=(state.standardTasks||[]).find(x=>x.id===task.standardTaskId);if(standard)standard.active=false;state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));}else state.tasks=state.tasks.filter(x=>String(x.id)!==String(id));}
     if(type==="weeklyHabit") state.weeklyHabits=(state.weeklyHabits||[]).filter(x=>String(x.id)!==String(id));
     save();closeEditor();render();return;
   }
