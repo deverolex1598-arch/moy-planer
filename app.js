@@ -197,7 +197,7 @@ function home(v) {
  v.innerHTML=section("Сегодня","Твоё уютное пространство ♡")+
  `<div class="card home-progress"><div class="row between"><div><div class="muted">Задачи сегодня</div><div class="big">${done} из ${todays.length}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(done,todays.length,"выполнено сегодня")}</div></div>
  <div class="card"><div class="row between"><h3>♡ Мои задачи на сегодня</h3></div>${taskList(todays,todayKey)}<button class="primary" data-add="task" data-add-day="${todayKey}">＋ Добавить задачу на сегодня</button></div>
- <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3><button class="mini icon-edit" data-go="habits" aria-label="Изменить дела на неделю" title="Изменить">✎</button></div>
+ <div class="card weekly-home"><div class="row between"><h3>✿ Дела на неделю</h3></div>
  ${wh.map(x=>weeklyHabitRow(x,homeWeekKey)).join("")||'<div class="empty">Добавь одно дело на всю неделю ♡</div>'}
  <button class="primary" data-add="weeklyHabit">＋ Добавить дело на неделю</button></div>
  <div class="card"><div class="row between"><div><h3>✎ Заметка на сегодня</h3><div class="muted">${today.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div></div><button class="mini" data-add="note" data-add-day="${td}">＋ Добавить заметку</button></div>
@@ -329,6 +329,7 @@ function fallbackUnusualHoliday(key) {
     "09-21":"Международный день мира",
     "10-04":"Всемирный день животных",
     "10-31":"Хэллоуин",
+    "11-18":"Всемирный день предотвращения и исцеления от сексуальной эксплуатации, насилия и надругательств над детьми",
     "11-19":"Всемирный день туалета и Международный мужской день",
     "11-21":"Всемирный день телевидения",
     "12-21":"Всемирный день сноуборда"
@@ -344,7 +345,7 @@ function holidayForDateCard(key) {
   const heading=isToday?"🎉 Праздник сегодня":"🎉 Праздники на выбранную дату";
   if(items.length)return `<div class="card holiday-card"><h3>${heading}</h3>${items.map(x=>`<p><b>${escapeHtml(x.title)}</b><span class="muted"> · ${escapeHtml(x.source)}</span></p>`).join("")}</div>`;
   const unusual=fallbackUnusualHoliday(key);
-  return `<div class="card holiday-card"><h3>${heading}</h3><p><b>${unusual?escapeHtml(unusual):"Необычный праздник для этой даты пока не добавлен"}</b></p><p class="muted">${selected.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})} · ${unusual?"Необычная дата":"Список праздников хранится в планере и доступен без интернета"}</p></div>`;
+  return `<div class="card holiday-card"><h3>${heading}</h3><p><b>${unusual?escapeHtml(unusual):"Необычный праздник для этой даты пока не добавлен"}</b></p><p class="muted">${selected.toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</p></div>`;
 }
 function calendar(v){
   const month = new Date(today.getFullYear(), today.getMonth() + calendarMonthOffset, 1);
