@@ -14,8 +14,11 @@
     window.plannerCurrentUserId = user?.id || null;
     $("signOut").hidden = !user;
     $("authForm").hidden = !!user;
-    $("storageStatus").textContent = user ? "Личные данные синхронизируются с аккаунтом" : "Данные хранятся на этом устройстве";
-    if (user) status("Вход выполнен: " + user.email);
+    $("accountBtn").textContent = user ? "♡ Аккаунт · Вход выполнен" : "♡ Аккаунт";
+    $("accountBtn").setAttribute("aria-label", user ? "Ты вошла в свой аккаунт" : "Войти в аккаунт");
+    $("storageStatus").textContent = user ? "♡ Ты в своём аккаунте · подключаем синхронизацию" : "Данные хранятся на этом устройстве";
+    if (user) status("Вход выполнен: " + user.email + ". Подключаю личные записи…");
+    else status("Ты вышла из аккаунта. Записи на этом устройстве не удалены.");
   };
   const loadUserData = async user => {
     ready = false;
@@ -27,7 +30,11 @@
     try { cachedState = JSON.parse(localStorage.getItem(cacheKey) || "{}") || {}; } catch (_) { cachedState = {}; }
     window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: cachedState }));
     const { data, error } = await client.from(TABLE).select("data").eq("user_id", user.id).maybeSingle();
-    if (error) { status("Не удалось загрузить личные данные: " + error.message, true); return; }
+    if (error) {
+      status("Не удалось загрузить личные данные: " + error.message + ". Локальная копия сохранена на устройстве.", true);
+      $("storageStatus").textContent = "♡ Вход выполнен · есть проблема с облачной синхронизацией";
+      return;
+    }
     if (data?.data && typeof data.data === "object") {
       window.dispatchEvent(new CustomEvent("planner-cloud-load", { detail: data.data }));
       status("Твои личные записи загружены и защищены аккаунтом.");
@@ -55,8 +62,13 @@
         { user_id: window.plannerCurrentUserId, data: state, updated_at: new Date().toISOString() },
         { onConflict: "user_id" }
       );
-      if (error) status("Не удалось синхронизировать записи. Они пока сохранены на устройстве.", true);
-      else $("storageStatus").textContent = "Личные записи синхронизированы ♡";
+      if (error) {
+        status("Не удалось синхронизировать записи. Они пока сохранены на устройстве.", true);
+        $("storageStatus").textContent = "♡ Вход выполнен · есть проблема с облачной синхронизацией";
+      } else {
+        $("storageStatus").textContent = "♡ Ты в своём аккаунте · личные записи синхронизированы";
+        status("Синхронизация завершена. Твои записи сохранены в аккаунте ♡");
+      }
     }, 650);
   };
 
