@@ -185,7 +185,21 @@ function quote() {
 }
 
 function applyTheme() {
-  document.body.className = state.theme === "pink" ? "" : "theme-" + state.theme;
+  const theme = state.theme || "lavender";
+  document.body.className = theme === "pink" ? "" : "theme-" + theme;
+  ["--bg","--card","--ink","--muted","--accent","--soft","--line","--good"].forEach(name => document.body.style.removeProperty(name));
+  if (theme === "custom") {
+    const palette = state.customTheme && typeof state.customTheme === "object" ? state.customTheme : {};
+    const colors = {bg:palette.bg||"#fff5f4",card:palette.card||"#fffdfb",ink:palette.ink||"#68434a",accent:palette.accent||"#e58da2"};
+    document.body.style.setProperty("--bg",colors.bg);
+    document.body.style.setProperty("--card",colors.card);
+    document.body.style.setProperty("--ink",colors.ink);
+    document.body.style.setProperty("--muted","color-mix(in srgb, "+colors.ink+" 68%, "+colors.bg+")");
+    document.body.style.setProperty("--accent",colors.accent);
+    document.body.style.setProperty("--soft","color-mix(in srgb, "+colors.accent+" 14%, "+colors.bg+")");
+    document.body.style.setProperty("--line","color-mix(in srgb, "+colors.accent+" 24%, "+colors.bg+")");
+    document.body.style.setProperty("--good",colors.accent);
+  }
   const styles = getComputedStyle(document.body);
   const bg = styles.getPropertyValue("--bg").trim() || "#f8f7fd";
   const accent = styles.getPropertyValue("--accent").trim() || "#9994c9";
@@ -306,13 +320,21 @@ function standardWeeklySettingsHtml() {
 }
 
 function settingsView(v) {
-  const themes = ["pink","peach","blue","beige","green","lavender","brown","dark"];
-  const labels = ["Розовая","Персиковая","Голубая","Бежевая","Шалфейная","Лавандовая","Шоколадная","Ночная"];
+  const themes = ["pink","peach","blue","beige","green","lavender","brown","dark","mint","rose","sky","graphite"];
+  const labels = ["Розовая","Персиковая","Голубая","Бежевая","Шалфейная","Лавандовая","Шоколадная","Ночная","Мятная","Пудровая","Небесная","Графитовая"];
+  const customTheme = state.customTheme && typeof state.customTheme === "object" ? state.customTheme : {bg:"#fff5f4",card:"#fffdfb",ink:"#68434a",accent:"#e58da2"};
   const weekly = state.weeklyHabits || [];
   const menuTabs = [{id:"week",label:"Неделя"},{id:"cycle",label:"Цикл"},{id:"diary",label:"Дневник"},{id:"calendar",label:"Календарь"}];
   v.innerHTML = section("Настройки","Оформление и редактирование ♡") +
     `<div class="card"><h3>Что показывать в меню</h3><p class="muted">Скрытые вкладки можно вернуть здесь в любой момент.</p>${menuTabs.map(x=>`<div class="item menu-setting"><span class="itemtext">${x.label}</span><button class="mini ${!(state.hiddenTabs||[]).includes(x.id)?"active":""}" data-toggle-tab="${x.id}">${(state.hiddenTabs||[]).includes(x.id)?"Показать":"Скрыть"}</button></div>`).join("")}<div class="soft-caption">Вкладка «Сегодня» всегда остаётся доступной. Остальные разделы можно скрывать и возвращать.</div></div>
-    <div class="card"><h3>Оформление</h3><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div></div>
+    <div class="card"><h3>Оформление</h3><p class="muted">Выбери готовую палитру или собери собственную.</p><div class="theme-options">${themes.map((t,i) => `<button class="theme-choice ${state.theme===t?"active":""}" data-theme="${t}">${labels[i]}</button>`).join("")}</div>
+    <div class="custom-theme-panel"><h3>Мои цвета</h3><p class="muted">Настрой фон, карточки, текст и главный цвет кнопок.</p><div class="custom-color-grid">
+      <label>Фон страницы<input type="color" data-custom-theme-color="bg" value="${escapeHtml(customTheme.bg||"#fff5f4")}"></label>
+      <label>Карточки<input type="color" data-custom-theme-color="card" value="${escapeHtml(customTheme.card||"#fffdfb")}"></label>
+      <label>Цвет текста<input type="color" data-custom-theme-color="ink" value="${escapeHtml(customTheme.ink||"#68434a")}"></label>
+      <label>Акцент и кнопки<input type="color" data-custom-theme-color="accent" value="${escapeHtml(customTheme.accent||"#e58da2")}"></label>
+    </div><div class="row between custom-theme-actions"><span class="muted">${state.theme==="custom"?"Твоя палитра активна":"Нажми «Применить мои цвета», чтобы включить"}</span><button class="primary" type="button" data-apply-custom-theme>Применить мои цвета</button></div>
+    <button class="mini" type="button" data-reset-custom-theme>Вернуть исходные цвета</button></div></div>
     <div class="card"><h3>Стандартные ежедневные дела</h3><p class="muted">Можно добавить дело в ежедневный список или скрыть его. Скрытые дела останутся здесь.</p>
     <button class="mini" data-restore-standard-daily-tasks="yes">Вернуть все стандартные задачи</button>
     ${(state.standardTasks||[]).map(x=>`<div class="item"><span class="itemtext">${x.emoji} ${escapeHtml(x.title)}</span><button class="mini ${x.active?"active":""}" data-toggle-standard-task="${x.id}">${x.active?"Скрыть":"Добавить"}</button></div>`).join("")}    ${(state.tasks||[]).some(t=>!t.archived&&!t.standardTaskId)?'<button class="mini danger" data-delete-custom-daily-tasks="yes">Удалить все собственные задачи</button>':""}</div>
@@ -634,8 +656,20 @@ document.addEventListener("click", e => {
   if (b.dataset.theme) {
     state.theme = b.dataset.theme;
     save();
-    applyTheme();
-    $("#view").querySelectorAll("[data-theme]").forEach(x => x.classList.toggle("active", x.dataset.theme === state.theme));
+    render();
+    return;
+  }
+  if (b.hasAttribute("data-apply-custom-theme")) {
+    state.theme = "custom";
+    save();
+    render();
+    return;
+  }
+  if (b.hasAttribute("data-reset-custom-theme")) {
+    state.customTheme = {bg:"#fff5f4",card:"#fffdfb",ink:"#68434a",accent:"#e58da2"};
+    state.theme = "custom";
+    save();
+    render();
     return;
   }
 
@@ -770,6 +804,14 @@ document.addEventListener("click", e => {
 });
 
 document.addEventListener("change", e => {
+  if (e.target.matches("[data-custom-theme-color]")) {
+    state.customTheme = state.customTheme && typeof state.customTheme === "object" ? state.customTheme : {bg:"#fff5f4",card:"#fffdfb",ink:"#68434a",accent:"#e58da2"};
+    state.customTheme[e.target.dataset.customThemeColor] = e.target.value;
+    save();
+    const status = $("#view .custom-theme-actions .muted");
+    if (status) status.textContent = "Цвет сохранён · нажми «Применить мои цвета», чтобы включить палитру";
+    return;
+  }
   if (e.target.id === "diaryDateFilter") { diaryDateFilter = e.target.value || ""; render(); return; }
   if (e.target.matches("[data-care-item]")) {
     const day=dateKey(today), idx=Number(e.target.dataset.careItem);

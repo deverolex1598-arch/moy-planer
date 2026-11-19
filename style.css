@@ -311,3 +311,61 @@ nav{grid-template-columns:repeat(5,minmax(0,1fr))}
 .cycle-daily-fold[open]>summary{border-bottom:1px solid var(--line)}
 .diary-date-filter{display:block;margin:12px 0;color:var(--muted);font-size:12px}
 .diary-date-filter input{display:block;width:100%;box-sizing:border-box;margin-top:6px}
+
+
+/* Новые цветовые палитры */
+body.theme-mint{--bg:#f1faf6;--card:#fcfffd;--ink:#365b4d;--muted:#78998a;--accent:#69ad91;--soft:#e0f2e9;--line:#d1e8dc;--good:#6fae91;background:radial-gradient(ellipse at 12% 0%,#dff3e9 0,transparent 44%),var(--bg)}
+body.theme-rose{--bg:#fff4f7;--card:#fffdfd;--ink:#694653;--muted:#a98290;--accent:#d78ca8;--soft:#f8e3eb;--line:#efd3df;--good:#91a98d;background:radial-gradient(ellipse at 12% 0%,#f9e2eb 0,transparent 44%),var(--bg)}
+body.theme-sky{--bg:#f1f8ff;--card:#fff;--ink:#3e5874;--muted:#829bb5;--accent:#77a9d5;--soft:#e2effb;--line:#d4e5f4;--good:#83a995;background:radial-gradient(ellipse at 12% 0%,#dfedfb 0,transparent 44%),var(--bg)}
+body.theme-graphite{--bg:#292d35;--card:#353b46;--ink:#e9edf3;--muted:#aab4c2;--accent:#9daec7;--soft:#444e5d;--line:#505c6d;--good:#91b49e;background:radial-gradient(ellipse at 12% 0%,#414b5b 0,transparent 44%),var(--bg)}
+body.theme-mint .card,body.theme-rose .card,body.theme-sky .card,body.theme-graphite .card{background:var(--card);border-color:var(--line)}
+body.theme-mint .primary,body.theme-rose .primary,body.theme-sky .primary,body.theme-graphite .primary{background:var(--accent);color:#fff;box-shadow:none}
+body.theme-mint .quote,body.theme-rose .quote,body.theme-sky .quote,body.theme-graphite .quote{background:var(--soft);color:var(--ink);border-color:var(--line)}
+body.theme-mint .ghost,body.theme-mint .mini,body.theme-rose .ghost,body.theme-rose .mini,body.theme-sky .ghost,body.theme-sky .mini,body.theme-graphite .ghost,body.theme-graphite .mini{background:var(--card);border-color:var(--line);color:var(--ink)}
+body.theme-mint nav,body.theme-rose nav,body.theme-sky nav,body.theme-graphite nav{background:var(--card);border-color:var(--line)}
+body.theme-mint nav button.active,body.theme-rose nav button.active,body.theme-sky nav button.active,body.theme-graphite nav button.active{background:var(--soft);color:var(--accent);box-shadow:none}
+body.theme-mint .day,body.theme-mint .cycle-date,body.theme-rose .day,body.theme-rose .cycle-date,body.theme-sky .day,body.theme-sky .cycle-date,body.theme-graphite .day,body.theme-graphite .cycle-date{background:var(--card);border-color:var(--line);color:var(--muted)}
+body.theme-mint .day.selected,body.theme-rose .day.selected,body.theme-sky .day.selected,body.theme-graphite .day.selected{background:var(--soft);border-color:var(--accent);color:var(--ink)}
+body.theme-mint input,body.theme-mint textarea,body.theme-mint select,body.theme-rose input,body.theme-rose textarea,body.theme-rose select,body.theme-sky input,body.theme-sky textarea,body.theme-sky select,body.theme-graphite input,body.theme-graphite textarea,body.theme-graphite select{background:var(--bg);border-color:var(--line);color:var(--ink)}
+body.theme-graphite .week-day-card.is-selected{background:var(--soft);border-color:var(--accent)}
+body.theme-graphite .check{background:var(--bg);border-color:var(--line)}
+body.theme-graphite .check.on{background:var(--good);border-color:var(--good)}
+body.theme-custom{background:var(--bg);color:var(--ink)}
+body.theme-custom h1,body.theme-custom h2,body.theme-custom h3{color:var(--ink)}
+body.theme-custom .quote{background:var(--soft);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+body.theme-custom .card{background:var(--card);border-color:var(--line);box-shadow:0 7px 22px color-mix(in srgb,var(--ink) 10%,transparent)}
+body.theme-custom .card:after,body.theme-custom .item:last-child:after{color:var(--accent)}
+body.theme-custom .primary{background:var(--accent);color:white;box-shadow:none}
+body.theme-custom .ghost,body.theme-custom .mini{background:var(--card);border-color:var(--line);color:var(--ink)}
+body.theme-custom .round{background:var(--soft);color:var(--accent)}
+body.theme-custom nav{background:var(--card);border-color:var(--line)}
+body.theme-custom nav button.active{background:var(--soft);color:var(--accent);box-shadow:none}
+body.theme-custom .day,body.theme-custom .cycle-date,body.theme-custom .week-task-day{background:var(--bg);border-color:var(--line);color:var(--ink)}
+body.theme-custom .day.selected{background:var(--soft);border-color:var(--accent);color:var(--ink)}
+body.theme-custom .progress{background:var(--soft)}
+body.theme-custom .progress i{background:var(--accent)}
+body.theme-custom .check{background:var(--bg);border-color:var(--line)}
+body.theme-custom .check.on{background:var(--good);border-color:var(--good)}
+body.theme-custom input,body.theme-custom textarea,body.theme-custom select{background:var(--bg);border-color:var(--line);color:var(--ink)}
+body.theme-custom dialog{background:var(--card);color:var(--ink)}
+.theme-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.theme-choice{min-height:42px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;padding:9px}
+.theme-choice.active{border:2px solid var(--accent);background:var(--soft);font-weight:800}
+.custom-theme-panel{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.custom-color-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.custom-color-grid label{margin:4px 0;font-size:11px}
+.custom-color-grid input[type=color]{display:block;width:100%;height:42px;padding:4px;margin-top:5px;cursor:pointer}
+.custom-theme-actions{align-items:flex-end;gap:8px;flex-wrap:wrap;margin:12px 0}
+.custom-theme-actions .muted{flex:1 1 130px}
+@media(max-width:380px){.custom-theme-actions .primary{width:100%}}
+
+/* Контраст заголовков и отметок в новых и пользовательской темах */
+body.theme-mint h1,body.theme-mint h2,body.theme-mint h3,body.theme-rose h1,body.theme-rose h2,body.theme-rose h3,body.theme-sky h1,body.theme-sky h2,body.theme-sky h3,body.theme-graphite h1,body.theme-graphite h2,body.theme-graphite h3{color:var(--ink)}
+body.theme-mint .check,body.theme-rose .check,body.theme-sky .check,body.theme-graphite .check{background:var(--bg);border-color:var(--line)}
+body.theme-mint .check.on,body.theme-rose .check.on,body.theme-sky .check.on,body.theme-graphite .check.on{background:var(--good);border-color:var(--good)}
+body.theme-custom .week-day-card.is-selected{background:var(--soft);border-color:var(--accent)}
+body.theme-custom .cycle-date.actual{background:var(--accent);border-color:var(--accent);color:#fff}
+body.theme-custom .cycle-date.forecast{background:var(--soft);border-color:var(--accent);color:var(--ink)}
+body.theme-custom .cycle-dot{background:var(--accent)}
+body.theme-custom .cycle-dot.forecast{background:var(--soft);border-color:var(--accent)}
+body.theme-custom .item.done .itemtext{color:var(--muted)}
