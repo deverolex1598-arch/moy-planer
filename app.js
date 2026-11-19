@@ -188,6 +188,7 @@ function weekKey(offset = 0) {
   return dateKey(d);
 }
 function weeklyDone(h, key) { return Boolean(h.doneWeeks && h.doneWeeks[key]); }
+function weeklyHabitsForWeek(key) { return (state.weeklyHabits || []).filter(h => h.repeatWeekly !== false || h.createdWeek === key); }
 function weeklyHabitRow(h, key) {
   const done = weeklyDone(h, key);
   return `<div class="item ${done?"done":""}"><button class="check ${done?"on":""}" data-weekly-habit="${h.id}" data-week-key="${key}" aria-label="${done?"Отметить невыполненным":"Отметить выполненным"}">${done?"✓":""}</button><span class="itemtext">${(h.emoji || taskEmoji(h.name))} ${escapeHtml(h.name)}</span><button class="mini icon-edit" data-edit-weekly-habit="${h.id}" aria-label="Изменить" title="Изменить">✎</button></div>`;
@@ -227,7 +228,7 @@ function progress(n) {
 
 function home(v) {
  const td=(today.getDay()+6)%7, todayKey=dateKey(today), todays=tasksForDate(todayKey), done=todays.filter(t=>taskIsDone(t,todayKey)).length;
- const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), wh=state.weeklyHabits||[], homeWeekKey=weekKey(0);
+ const ns=state.notes.filter(n=>Number(n.day??td)===td&&!n.archived), homeWeekKey=weekKey(0), wh=weeklyHabitsForWeek(homeWeekKey);
  v.innerHTML=section("Сегодня","Твоё уютное пространство ♡")+
  `<div class="card home-progress"><div class="row between"><div><div class="muted">Задачи сегодня</div><div class="big">${done} из ${todays.length}</div><div class="soft-caption">Маленькие шаги тоже важны ♡</div></div>${donut(done,todays.length,"выполнено сегодня")}</div></div>
  <div class="card"><div class="row between"><h3>♡ Мои задачи на сегодня</h3></div>${taskList(todays,todayKey)}<button class="primary" data-add="task" data-add-day="${todayKey}">＋ Добавить задачу на сегодня</button></div>
@@ -295,7 +296,7 @@ function taskList(items,date) {
 
 function orderedDays(){return Array.from({length:7},(_,k)=>(selectedDay+k)%7);}
 function weekTaskChart(key){
- const weekly=state.weeklyHabits||[];
+ const weekly=weeklyHabitsForWeek(key);
  const weeklyDoneCount=weekly.filter(h=>weeklyDone(h,key)).length;
  const weeklyPct=pct(weeklyDoneCount,weekly.length);
  const days=Array.from({length:7},(_,i)=>{
@@ -310,7 +311,7 @@ function weekTaskChart(key){
 }
 
 function week(v){
- const order=orderedDays(), selectedWeekKey=weekKey(weekOffset), weekly=state.weeklyHabits||[];
+ const order=orderedDays(), selectedWeekKey=weekKey(weekOffset), weekly=weeklyHabitsForWeek(selectedWeekKey);
  v.innerHTML=section("План недели","Все дни на виду — выбранный день всегда первым ♡")+
  `<div class="weeknav"><button class="ghost" data-week="-1">‹</button><b>${dateFor(0).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} — ${dateFor(6).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</b><button class="ghost" data-week="1">›</button></div>
  <div class="card"><div class="row between"><h3>Порядок дней</h3><span class="muted">Нажми на день</span></div><div class="daygrid">${DAYS.map((d,i)=>`<button class="day ${i===selectedDay?"selected":""}" data-day="${i}">${d}<strong>${dateFor(i).getDate()}</strong></button>`).join("")}</div></div>
@@ -425,7 +426,7 @@ function calendar(v){
   const entries=(state.calendarEntries||[]).filter(x=>x.date===selectedCalendarDate).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
   const types={birthday:"🎂 Личный праздник",anniversary:"💞 Годовщина",reminder:"📌 Напоминание",appointment:"🩺 Встреча / запись",holiday:"🎉 Праздник",trip:"✈️ Поездка",other:"✿ Другое"};
   const doneTasks=tasksForDate(selectedCalendarDate).filter(t=>taskIsDone(t,selectedCalendarDate));
-  const weekDone=(state.weeklyHabits||[]).filter(h=>weeklyDone(h,weekStartKey(selectedCalendarDate)));
+  const selectedWeekKey=weekStartKey(selectedCalendarDate),weekDone=weeklyHabitsForWeek(selectedWeekKey).filter(h=>weeklyDone(h,selectedWeekKey));
   const cycle=state.cycle||{},log=(cycle.logs||{})[selectedCalendarDate]||{};
   const period=(cycle.periods||[]).find(p=>selectedCalendarDate>=p.start&&selectedCalendarDate<=(p.end||p.start));
   const hasCycle=Boolean(period||Object.values(log).some(x=>Array.isArray(x)?x.length:x));
@@ -484,7 +485,7 @@ function openEditor(type,item = {}) {
   form.innerHTML = "";
   const fields = {
     task: `<label>Название задачи<input name="title" required value="${escapeHtml(item.title || "")}"></label><label>Смайлик<input name="emoji" maxlength="8" value="${escapeHtml(item.emoji || "")}" placeholder="Пусто — подобрать автоматически"></label><label>Дата<input name="date" type="date" required value="${escapeHtml(item.date || dateKey(today))}"></label><label class="editor-repeat"><input name="repeatDaily" type="checkbox" value="yes" ${item.repeatDaily?"checked":""}> Повторять каждый день</label>`,
-    weeklyHabit: `<label>Дело на неделю<input name="name" required value="${escapeHtml(item.name || "")}"></label><label>Смайлик<input name="emoji" maxlength="8" value="${escapeHtml(item.emoji || "")}" placeholder="Пусто — подобрать автоматически"></label>`,
+    weeklyHabit: `<label>Дело на неделю<input name="name" required value="${escapeHtml(item.name || "")}"></label><label>Смайлик<input name="emoji" maxlength="8" value="${escapeHtml(item.emoji || "")}" placeholder="Пусто — подобрать автоматически"></label><label class="editor-repeat"><input name="repeatWeekly" type="checkbox" value="yes" ${item.repeatWeekly !== false ? "checked" : ""}> Повторять каждую неделю</label>`, 
     note: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Текст<textarea name="text" rows="5">${escapeHtml(item.text || "")}</textarea></label>`,
     diary: `<label>Заголовок<input name="title" value="${escapeHtml(item.title || "")}"></label><label>Запись<textarea name="text" rows="7" required>${escapeHtml(item.text || "")}</textarea></label>`,
     calendarEntry: `<label>Что отмечаем?<select name="kind">${[["birthday","🎂 День рождения"],["anniversary","💞 Годовщина"],["reminder","📌 Напоминание"],["appointment","🩺 Встреча / запись"],["holiday","🎉 Праздник"],["trip","✈️ Поездка"],["other","✿ Другое"]].map(([v,l])=>`<option value="${v}" ${(item.kind||"reminder")===v?"selected":""}>${l}</option>`).join("")}</select></label><label>Название<input name="title" required maxlength="100" value="${escapeHtml(item.title||"")}"></label><label>Заметка<textarea name="note" rows="4">${escapeHtml(item.note||"")}</textarea></label><label>Дата<input type="date" name="date" required value="${escapeHtml(item.date||selectedCalendarDate)}"></label>`
@@ -706,8 +707,8 @@ document.addEventListener("submit", e => {
 
   if (type === "weeklyHabit") {
     state.weeklyHabits=Array.isArray(state.weeklyHabits)?state.weeklyHabits:[];
-    if(id){const h=byId(state.weeklyHabits,id);if(h){h.name=values.name;h.emoji=String(values.emoji||"").trim();if(!h.emoji)delete h.emoji;}}
-    else {const emoji=String(values.emoji||"").trim();state.weeklyHabits.push({id:newId(),name:values.name,...(emoji?{emoji}:{}),done:false,doneWeeks:{},frequency:"weekly"});}
+    if(id){const h=byId(state.weeklyHabits,id);if(h){h.name=values.name;h.emoji=String(values.emoji||"").trim();if(!h.emoji)delete h.emoji;h.repeatWeekly=values.repeatWeekly==="yes";if(h.repeatWeekly)delete h.createdWeek;else if(!h.createdWeek)h.createdWeek=weekKey(0);}}
+    else {const emoji=String(values.emoji||"").trim(),repeatWeekly=values.repeatWeekly==="yes";state.weeklyHabits.push({id:newId(),name:values.name,...(emoji?{emoji}:{}),done:false,doneWeeks:{},frequency:"weekly",repeatWeekly,...(!repeatWeekly?{createdWeek:weekKey(0)}:{})});}
   }
 
   if (type === "diary") {
